@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence xmlns="https://jakarta.ee/xml/ns/persistence"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="https://jakarta.ee/xml/ns/persistence
+             https://jakarta.ee/xml/ns/persistence/persistence_3_0.xsd"
+             version="3.0">
+
+    <persistence-unit name="PolyOE_PU" transaction-type="RESOURCE_LOCAL">
+        <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
+
+        <!-- Entity Classes -->
+        <class>poly.entity.User</class>
+        <class>poly.entity.Video</class>
+        <class>poly.entity.Favorite</class>
+        <class>poly.entity.Share</class>
+
+        <properties>
+            <!-- Cấu hình kết nối SQL Server -->
+            <property name="jakarta.persistence.jdbc.driver"
+                      value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/>
+
+            <!-- DATABASE NAME: YouTuBee -->
+            <property name="jakarta.persistence.jdbc.url"
+                      value="jdbc:sqlserver://localhost:1433;databaseName=YouTuBee;encrypt=false;trustServerCertificate=true"/>
+
+            <property name="jakarta.persistence.jdbc.user" value="Tunz"/>
+            <property name="jakarta.persistence.jdbc.password" value="2146"/>
+
+            <!-- Hibernate Properties -->
+            <property name="hibernate.dialect"
+                      value="org.hibernate.dialect.SQLServerDialect"/>
+            <property name="hibernate.show_sql" value="true"/>
+            <property name="hibernate.format_sql" value="true"/>
+
+            <!-- QUAN TRỌNG: Dùng 'update' để tự tạo bảng -->
+            <property name="hibernate.hbm2ddl.auto" value="update"/>
+
+            <!-- Connection Pool Settings -->
+            <property name="hibernate.c3p0.min_size" value="2"/>
+            <property name="hibernate.c3p0.max_size" value="10"/>
+            <property name="hibernate.c3p0.timeout" value="300"/>
+            <property name="hibernate.c3p0.max_statements" value="50"/>
+            <property name="hibernate.c3p0.idle_test_period" value="3000"/>
+
+            <!-- Validation và Error handling -->
+            <property name="hibernate.connection.autocommit" value="false"/>
+            <property name="hibernate.connection.handling_mode" 
+                      value="DELAYED_ACQUISITION_AND_RELEASE_AFTER_TRANSACTION"/>
+        </properties>
+    </persistence-unit>
+</persistence>

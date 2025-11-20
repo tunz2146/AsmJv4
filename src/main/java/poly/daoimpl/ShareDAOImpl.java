@@ -1,0 +1,104 @@
+// File: src/main/java/poly/daoimpl/ShareDAOImpl.java
+package poly.daoimpl;
+
+import poly.dao.ShareDAO;
+import poly.entity.Share;
+import poly.util.JPAUtils;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.TypedQuery;
+import java.util.List;
+
+public class ShareDAOImpl implements ShareDAO {
+    
+    @Override
+    public List<Share> findAll() {
+        EntityManager em = JPAUtils.getEntityManager();
+        try {
+            // JOIN FETCH để load eager user và video
+            TypedQuery<Share> query = em.createQuery(
+                "SELECT DISTINCT s FROM Share s " +
+                "JOIN FETCH s.user " +
+                "JOIN FETCH s.video " +
+                "ORDER BY s.shareDate DESC", 
+                Share.class
+            );
+            return query.getResultList();
+        } finally {
+            JPAUtils.closeEntityManager(em);
+        }
+    }
+    
+    @Override
+    public Share findById(Long id) {
+        EntityManager em = JPAUtils.getEntityManager();
+        try {
+            TypedQuery<Share> query = em.createQuery(
+                "SELECT s FROM Share s " +
+                "JOIN FETCH s.user " +
+                "JOIN FETCH s.video " +
+                "WHERE s.id = :id", 
+                Share.class
+            );
+            query.setParameter("id", id);
+            return query.getSingleResult();
+        } catch (Exception e) {
+            return null;
+        } finally {
+            JPAUtils.closeEntityManager(em);
+        }
+    }
+    
+    @Override
+    public void create(Share share) {
+        EntityManager em = JPAUtils.getEntityManager();
+        try {
+            em.getTransaction().begin();
+            em.persist(share);
+            em.getTransaction().commit();
+        } catch (Exception e) {
+            if (em.getTransaction().isActive()) {
+                em.getTransaction().rollback();
+            }
+            throw e;
+        } finally {
+            JPAUtils.closeEntityManager(em);
+        }
+    }
+    
+    @Override
+    public void update(Share share) {
+        EntityManager em = JPAUtils.getEntityManager();
+        try {
+            em.getTransaction().begin();
+            em.merge(share);
+            em.getTransaction().commit();
+        } catch (Exception e) {
+            if (em.getTransaction().isActive()) {
+                em.getTransaction().rollback();
+            }
+            throw e;
+        } finally {
+            JPAUtils.closeEntityManager(em);
+        }
+    }
+    
+    @Override
+    public void deleteById(Long id) {
+        EntityManager em = JPAUtils.getEntityManager();
+        try {
+            em.getTransaction().begin();
+            Share share = em.find(Share.class, id);
+            if (share != null) {
+                em.remove(share);
+            }
+            em.getTransaction().commit();
+        } catch (Exception e) {
+            if (em.getTransaction().isActive()) {
+                em.getTransaction().rollback();
+            }
+            throw e;
+        } finally {
+            JPAUtils.closeEntityManager(em);
+        }
+    }
+}
