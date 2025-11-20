@@ -36,21 +36,18 @@
             border-radius: 8px;
             text-align: center;
         }
+        .btn-action {
+            transition: all 0.3s ease;
+        }
+        .btn-action:hover {
+            transform: translateY(-2px);
+        }
     </style>
 </head>
 <body class="bg-light">
     
     <!-- Header -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-        <div class="container">
-            <a class="navbar-brand" href="<%=request.getContextPath()%>/home">
-                <i class="bi bi-arrow-left me-2"></i>Quay lại
-            </a>
-            <span class="navbar-text text-white">
-                Chi tiết video
-            </span>
-        </div>
-    </nav>
+    <jsp:include page="/views/layout/header.jsp" />
 
     <div class="container my-5">
         
@@ -86,6 +83,22 @@
                                 ${video.title}
                             </h2>
                             
+                            <!-- Creator Info -->
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" 
+                                     style="width: 40px; height: 40px;">
+                                    <i class="bi bi-person-fill"></i>
+                                </div>
+                                <div>
+                                    <strong>${video.creatorName}</strong>
+                                    <br>
+                                    <small class="text-muted">
+                                        <i class="bi bi-calendar3"></i>
+                                        ${video.createdDate}
+                                    </small>
+                                </div>
+                            </div>
+                            
                             <!-- Stats Row -->
                             <div class="row g-3 mb-4">
                                 <div class="col-md-4">
@@ -98,14 +111,14 @@
                                 <div class="col-md-4">
                                     <div class="stat-box">
                                         <i class="bi bi-heart-fill text-danger" style="font-size: 2rem;"></i>
-                                        <h4 class="mt-2 mb-0">0</h4>
+                                        <h4 class="mt-2 mb-0" id="likeCount">${likeCount}</h4>
                                         <small class="text-muted">Lượt thích</small>
                                     </div>
                                 </div>
                                 <div class="col-md-4">
                                     <div class="stat-box">
                                         <i class="bi bi-share-fill text-success" style="font-size: 2rem;"></i>
-                                        <h4 class="mt-2 mb-0">0</h4>
+                                        <h4 class="mt-2 mb-0">${shareCount}</h4>
                                         <small class="text-muted">Chia sẻ</small>
                                     </div>
                                 </div>
@@ -113,12 +126,37 @@
 
                             <!-- Action Buttons -->
                             <div class="d-flex gap-2 mb-4">
-                                <button class="btn btn-danger flex-fill" disabled>
-                                    <i class="bi bi-heart me-2"></i>Yêu thích
-                                </button>
-                                <button class="btn btn-primary flex-fill" disabled>
-                                    <i class="bi bi-share me-2"></i>Chia sẻ
-                                </button>
+                                <c:choose>
+                                    <c:when test="${not empty sessionScope.currentUser}">
+                                        <c:choose>
+                                            <c:when test="${isLiked}">
+                                                <button class="btn btn-danger flex-fill btn-action" 
+                                                        onclick="unlikeVideo('${video.id}')">
+                                                    <i class="bi bi-heart-fill me-2"></i>Đã thích
+                                                </button>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <button class="btn btn-outline-danger flex-fill btn-action" 
+                                                        onclick="likeVideo('${video.id}')">
+                                                    <i class="bi bi-heart me-2"></i>Yêu thích
+                                                </button>
+                                            </c:otherwise>
+                                        </c:choose>
+                                        
+                                        <button class="btn btn-primary flex-fill btn-action" 
+                                                onclick="shareVideo('${video.id}')">
+                                            <i class="bi bi-share me-2"></i>Chia sẻ
+                                        </button>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <button class="btn btn-outline-danger flex-fill" disabled>
+                                            <i class="bi bi-heart me-2"></i>Đăng nhập để thích
+                                        </button>
+                                        <button class="btn btn-outline-primary flex-fill" disabled>
+                                            <i class="bi bi-share me-2"></i>Đăng nhập để chia sẻ
+                                        </button>
+                                    </c:otherwise>
+                                </c:choose>
                             </div>
 
                             <!-- Description -->
@@ -157,8 +195,20 @@
                                     <td><code>${video.videoId}</code></td>
                                 </tr>
                                 <tr>
+                                    <td class="text-muted">Người đăng:</td>
+                                    <td><strong>${video.creatorName}</strong></td>
+                                </tr>
+                                <tr>
                                     <td class="text-muted">Lượt xem:</td>
                                     <td><strong class="text-primary">${video.views}</strong></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">Lượt thích:</td>
+                                    <td><strong class="text-danger">${likeCount}</strong></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">Chia sẻ:</td>
+                                    <td><strong class="text-success">${shareCount}</strong></td>
                                 </tr>
                                 <tr>
                                     <td class="text-muted">Trạng thái:</td>
@@ -187,16 +237,6 @@
                                  onerror="this.src='https://via.placeholder.com/400x300?text=No+Image'">
                         </div>
 
-                        <!-- Related Videos (Coming soon) -->
-                        <div class="info-card mt-3">
-                            <h5 class="fw-bold mb-3">
-                                <i class="bi bi-collection-play me-2"></i>Video đã xem
-                            </h5>
-                            <p class="text-muted text-center">
-                                <em>Chức năng đang phát triển</em>
-                            </p>
-                        </div>
-
                     </div>
                 </div>
 
@@ -215,15 +255,57 @@
     </div>
 
     <!-- Footer -->
-    <footer class="bg-dark text-white py-4 mt-5">
-        <div class="container text-center">
-            <p class="mb-0">
-                <i class="bi bi-code-slash me-2"></i>
-                Online Entertainment &copy; 2024
-            </p>
-        </div>
-    </footer>
+    <jsp:include page="/views/layout/footer.jsp" />
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function likeVideo(videoId) {
+            fetch('<%=request.getContextPath()%>/like-video', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'videoId=' + videoId
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert(data.message || 'Có lỗi xảy ra!');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Có lỗi xảy ra khi thích video!');
+            });
+        }
+
+        function unlikeVideo(videoId) {
+            if (!confirm('Bạn có chắc muốn bỏ thích video này?')) {
+                return;
+            }
+            
+            fetch('<%=request.getContextPath()%>/unlike-video', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'videoId=' + videoId
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert(data.message || 'Có lỗi xảy ra!');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Có lỗi xảy ra!');
+            });
+        }
+
+        function shareVideo(videoId) {
+            window.location.href = '<%=request.getContextPath()%>/share?videoId=' + videoId;
+        }
+    </script>
 </body>
 </html>
