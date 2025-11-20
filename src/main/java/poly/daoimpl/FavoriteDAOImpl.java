@@ -120,8 +120,6 @@ public class FavoriteDAOImpl implements FavoriteDAO {
         }
     }
     
-    // ===== METHODS MỚI CHO ASSIGNMENT =====
-    
     @Override
     public Favorite findByUserAndVideo(String userId, String videoId) {
         EntityManager em = JPAUtils.getEntityManager();
@@ -159,6 +157,26 @@ public class FavoriteDAOImpl implements FavoriteDAO {
                 em.getTransaction().rollback();
             }
             throw e;
+        } finally {
+            JPAUtils.closeEntityManager(em);
+        }
+    }
+    
+    // ✅ METHOD MỚI: Đếm số lượng like theo videoId
+    @Override
+    public int countByVideoId(String videoId) {
+        EntityManager em = JPAUtils.getEntityManager();
+        try {
+            Long count = em.createQuery(
+                "SELECT COUNT(f) FROM Favorite f WHERE f.video.id = :videoId", 
+                Long.class
+            )
+            .setParameter("videoId", videoId)
+            .getSingleResult();
+            return count.intValue();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return 0;
         } finally {
             JPAUtils.closeEntityManager(em);
         }

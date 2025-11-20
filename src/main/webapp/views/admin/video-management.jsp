@@ -36,7 +36,7 @@
                     <a href="<%=request.getContextPath()%>/admin/users" class="btn btn-light btn-sm me-2">
                         <i class="bi bi-people"></i> Users
                     </a>
-                    <a href="<%=request.getContextPath()%>/" class="btn btn-outline-light btn-sm">
+                    <a href="<%=request.getContextPath()%>/home" class="btn btn-outline-light btn-sm">
                         <i class="bi bi-house"></i> Home
                     </a>
                 </div>

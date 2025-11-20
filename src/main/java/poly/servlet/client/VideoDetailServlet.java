@@ -7,8 +7,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import poly.dao.FavoriteDAO;
+import poly.dao.ShareDAO;
 import poly.dao.VideoDAO;
 import poly.daoimpl.FavoriteDAOImpl;
+import poly.daoimpl.ShareDAOImpl;
 import poly.daoimpl.VideoDAOImpl;
 import poly.entity.Favorite;
 import poly.entity.User;
@@ -22,6 +24,7 @@ public class VideoDetailServlet extends HttpServlet {
     
     private VideoDAO videoDAO = new VideoDAOImpl();
     private FavoriteDAO favoriteDAO = new FavoriteDAOImpl();
+    private ShareDAO shareDAO = new ShareDAOImpl();
     
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) 
@@ -51,13 +54,13 @@ public class VideoDetailServlet extends HttpServlet {
             // Reload lại video để lấy số views mới
             video = videoDAO.findById(videoId);
             
-            // ✅ Đếm số lượng Like (Favorites)
-            int likeCount = countLikes(videoId);
+            // ✅ Đếm số lượng Like từ DATABASE
+            int likeCount = favoriteDAO.countByVideoId(videoId);
             
-            // ✅ Đếm số lượng Share
-            int shareCount = countShares(videoId);
+            // ✅ Đếm số lượng Share từ DATABASE
+            int shareCount = shareDAO.countByVideoId(videoId);
             
-            // ✅ Kiểm tra user đã like video này chưa
+            // Kiểm tra user đã like video này chưa
             boolean isLiked = false;
             HttpSession session = req.getSession(false);
             if (session != null && session.getAttribute("currentUser") != null) {
@@ -79,37 +82,6 @@ public class VideoDetailServlet extends HttpServlet {
             e.printStackTrace();
             req.setAttribute("error", "Lỗi khi tải video: " + e.getMessage());
             req.getRequestDispatcher("/views/client/home.jsp").forward(req, resp);
-        }
-    }
-    
-    /**
-     * Đếm số lượng Like của video
-     */
-    private int countLikes(String videoId) {
-        try {
-            return favoriteDAO.findAll().stream()
-                .filter(f -> f.getVideo() != null && f.getVideo().getId().equals(videoId))
-                .mapToInt(f -> 1)
-                .sum();
-        } catch (Exception e) {
-            e.printStackTrace();
-            return 0;
-        }
-    }
-    
-    /**
-     * Đếm số lượng Share của video
-     */
-    private int countShares(String videoId) {
-        try {
-            // Bạn có thể implement ShareDAO.countByVideoId() để tối ưu hơn
-            // Tạm thời dùng cách này
-            return videoDAO.findById(videoId).getShares() != null 
-                ? videoDAO.findById(videoId).getShares().size() 
-                : 0;
-        } catch (Exception e) {
-            e.printStackTrace();
-            return 0;
         }
     }
     

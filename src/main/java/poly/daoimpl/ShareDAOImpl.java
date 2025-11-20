@@ -14,7 +14,6 @@ public class ShareDAOImpl implements ShareDAO {
     public List<Share> findAll() {
         EntityManager em = JPAUtils.getEntityManager();
         try {
-            // JOIN FETCH để load eager user và video
             TypedQuery<Share> query = em.createQuery(
                 "SELECT DISTINCT s FROM Share s " +
                 "JOIN FETCH s.user " +
@@ -97,6 +96,26 @@ public class ShareDAOImpl implements ShareDAO {
                 em.getTransaction().rollback();
             }
             throw e;
+        } finally {
+            JPAUtils.closeEntityManager(em);
+        }
+    }
+    
+    // ✅ METHOD MỚI: Đếm số lượng share theo videoId
+    @Override
+    public int countByVideoId(String videoId) {
+        EntityManager em = JPAUtils.getEntityManager();
+        try {
+            Long count = em.createQuery(
+                "SELECT COUNT(s) FROM Share s WHERE s.video.id = :videoId", 
+                Long.class
+            )
+            .setParameter("videoId", videoId)
+            .getSingleResult();
+            return count.intValue();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return 0;
         } finally {
             JPAUtils.closeEntityManager(em);
         }

@@ -36,12 +36,10 @@ public class Video implements Serializable {
     @Column(name = "Active", nullable = false)
     private Boolean active = true;
     
-    // ✅ THÊM MỚI: Người tạo video
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)  // ✅ Đổi từ LAZY sang EAGER
     @JoinColumn(name = "CreatedBy")
     private User createdBy;
     
-    // ✅ THÊM MỚI: Ngày tạo
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "CreatedDate", nullable = false)
     private Date createdDate = new Date();
@@ -135,7 +133,6 @@ public class Video implements Serializable {
         this.active = active;
     }
     
-    // ✅ GETTER/SETTER MỚI
     public User getCreatedBy() {
         return createdBy;
     }
@@ -144,7 +141,6 @@ public class Video implements Serializable {
         this.createdBy = createdBy;
     }
     
-    // ✅ GETTER/SETTER MỚI
     public Date getCreatedDate() {
         return createdDate;
     }
@@ -169,6 +165,38 @@ public class Video implements Serializable {
         this.shares = shares;
     }
     
+    // ✅ THÊM HELPER METHODS
+    
+    /**
+     * Lấy tên người tạo video
+     * @return Tên đầy đủ hoặc "Unknown"
+     */
+    public String getCreatorName() {
+        if (createdBy != null) {
+            return createdBy.getFullname();
+        }
+        return "Unknown";
+    }
+    
+    /**
+     * Lấy ID người tạo video
+     * @return User ID hoặc null
+     */
+    public String getCreatorId() {
+        if (createdBy != null) {
+            return createdBy.getId();
+        }
+        return null;
+    }
+    
+    /**
+     * Kiểm tra video có creator không
+     * @return true nếu có creator
+     */
+    public boolean hasCreator() {
+        return createdBy != null;
+    }
+    
     @Override
     public String toString() {
         return "Video{" +
@@ -177,18 +205,8 @@ public class Video implements Serializable {
                 ", videoId='" + videoId + '\'' +
                 ", views=" + views +
                 ", active=" + active +
-                ", createdBy=" + (createdBy != null ? createdBy.getId() : "null") +
+                ", createdBy=" + getCreatorName() +
                 ", createdDate=" + createdDate +
                 '}';
-    }
-    
-    // ✅ HELPER METHOD: Lấy creator name
-    public String getCreatorName() {
-        return createdBy != null ? createdBy.getFullname() : "Unknown";
-    }
-    
-    // ✅ HELPER METHOD: Lấy creator ID
-    public String getCreatorId() {
-        return createdBy != null ? createdBy.getId() : null;
     }
 }

@@ -28,7 +28,15 @@ public class VideoDAOImpl implements VideoDAO {
     public Video findById(String id) {
         EntityManager em = JPAUtils.getEntityManager();
         try {
-            return em.find(Video.class, id);
+            // ✅ JOIN FETCH để load createdBy cùng lúc
+            TypedQuery<Video> query = em.createQuery(
+                "SELECT v FROM Video v LEFT JOIN FETCH v.createdBy WHERE v.id = :id", 
+                Video.class
+            );
+            query.setParameter("id", id);
+            return query.getSingleResult();
+        } catch (Exception e) {
+            return null;
         } finally {
             JPAUtils.closeEntityManager(em);
         }
