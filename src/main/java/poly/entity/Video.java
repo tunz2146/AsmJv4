@@ -3,6 +3,7 @@ package poly.entity;
 
 import jakarta.persistence.*;
 import java.io.Serializable;
+import java.util.Date;
 import java.util.List;
 
 @Entity
@@ -20,12 +21,10 @@ public class Video implements Serializable {
     @Column(name = "Poster", length = 200)
     private String poster;
     
-    // ✅ THÊM MỚI: YouTube Video ID (mã video trên YouTube)
     @Column(name = "VideoId", length = 20)
     private String videoId;
     
-    // ✅ THÊM MỚI: URL đầy đủ của video
-    @Column(name = "VideoUrl", length = 200)
+    @Column(name = "VideoUrl", length = 500)
     private String videoUrl;
     
     @Column(name = "Views", nullable = false)
@@ -36,6 +35,16 @@ public class Video implements Serializable {
     
     @Column(name = "Active", nullable = false)
     private Boolean active = true;
+    
+    // ✅ THÊM MỚI: Người tạo video
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "CreatedBy")
+    private User createdBy;
+    
+    // ✅ THÊM MỚI: Ngày tạo
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name = "CreatedDate", nullable = false)
+    private Date createdDate = new Date();
     
     @OneToMany(mappedBy = "video", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Favorite> favorites;
@@ -48,7 +57,7 @@ public class Video implements Serializable {
     }
     
     public Video(String id, String title, String poster, String videoId, String videoUrl, 
-                 Integer views, String description, Boolean active) {
+                 Integer views, String description, Boolean active, User createdBy, Date createdDate) {
         this.id = id;
         this.title = title;
         this.poster = poster;
@@ -57,6 +66,8 @@ public class Video implements Serializable {
         this.views = views;
         this.description = description;
         this.active = active;
+        this.createdBy = createdBy;
+        this.createdDate = createdDate;
     }
     
     // Getters and Setters
@@ -84,7 +95,6 @@ public class Video implements Serializable {
         this.poster = poster;
     }
     
-    // ✅ GETTER/SETTER MỚI
     public String getVideoId() {
         return videoId;
     }
@@ -93,7 +103,6 @@ public class Video implements Serializable {
         this.videoId = videoId;
     }
     
-    // ✅ GETTER/SETTER MỚI
     public String getVideoUrl() {
         return videoUrl;
     }
@@ -126,6 +135,24 @@ public class Video implements Serializable {
         this.active = active;
     }
     
+    // ✅ GETTER/SETTER MỚI
+    public User getCreatedBy() {
+        return createdBy;
+    }
+    
+    public void setCreatedBy(User createdBy) {
+        this.createdBy = createdBy;
+    }
+    
+    // ✅ GETTER/SETTER MỚI
+    public Date getCreatedDate() {
+        return createdDate;
+    }
+    
+    public void setCreatedDate(Date createdDate) {
+        this.createdDate = createdDate;
+    }
+    
     public List<Favorite> getFavorites() {
         return favorites;
     }
@@ -150,6 +177,18 @@ public class Video implements Serializable {
                 ", videoId='" + videoId + '\'' +
                 ", views=" + views +
                 ", active=" + active +
+                ", createdBy=" + (createdBy != null ? createdBy.getId() : "null") +
+                ", createdDate=" + createdDate +
                 '}';
+    }
+    
+    // ✅ HELPER METHOD: Lấy creator name
+    public String getCreatorName() {
+        return createdBy != null ? createdBy.getFullname() : "Unknown";
+    }
+    
+    // ✅ HELPER METHOD: Lấy creator ID
+    public String getCreatorId() {
+        return createdBy != null ? createdBy.getId() : null;
     }
 }
