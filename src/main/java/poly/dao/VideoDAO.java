@@ -12,9 +12,26 @@ public interface VideoDAO {
     void update(Video video);
     void deleteById(String id);
     
-    // Methods mới cho Assignment
+    // Methods hiện có
     List<Video> findWithPagination(int page, int size);
     int countAll();
     void incrementViews(String videoId);
     List<Video> findTop6ByViews();
+    
+    // ===== METHODS MỚI - RANDOM =====
+    
+    /**
+     * Lấy videos ngẫu nhiên với phân trang
+     * @param page Trang hiện tại
+     * @param size Số video mỗi trang
+     * @return Danh sách video random
+     */
+    List<Video> findRandomWithPagination(int page, int size);
+    
+    /**
+     * Lấy 5 videos đề xuất ngẫu nhiên (trừ video hiện tại)
+     * @param excludeVideoId Video ID cần loại trừ
+     * @return Danh sách 5 video random
+     */
+    List<Video> findRandomSuggestions(String excludeVideoId, int limit);
 }

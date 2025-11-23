@@ -5,26 +5,18 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
-import poly.dao.FavoriteDAO;
-import poly.dao.ShareDAO;
 import poly.dao.VideoDAO;
-import poly.daoimpl.FavoriteDAOImpl;
-import poly.daoimpl.ShareDAOImpl;
 import poly.daoimpl.VideoDAOImpl;
-import poly.entity.Favorite;
-import poly.entity.User;
 import poly.entity.Video;
 
 import java.io.IOException;
+import java.util.List;
 
 @WebServlet("/video-detail")
 public class VideoDetailServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
     
     private VideoDAO videoDAO = new VideoDAOImpl();
-    private FavoriteDAO favoriteDAO = new FavoriteDAOImpl();
-    private ShareDAO shareDAO = new ShareDAOImpl();
     
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) 
@@ -54,26 +46,21 @@ public class VideoDetailServlet extends HttpServlet {
             // Reload lại video để lấy số views mới
             video = videoDAO.findById(videoId);
             
-            // ✅ Đếm số lượng Like từ DATABASE
-            int likeCount = favoriteDAO.countByVideoId(videoId);
+            // ✅ LẤY 5 VIDEO ĐỀ XUẤT (trừ video hiện tại)
+            List<Video> suggestedVideos = videoDAO.findRandomSuggestions(videoId, 5);
             
-            // ✅ Đếm số lượng Share từ DATABASE
-            int shareCount = shareDAO.countByVideoId(videoId);
-            
-            // Kiểm tra user đã like video này chưa
-            boolean isLiked = false;
-            HttpSession session = req.getSession(false);
-            if (session != null && session.getAttribute("currentUser") != null) {
-                User currentUser = (User) session.getAttribute("currentUser");
-                Favorite favorite = favoriteDAO.findByUserAndVideo(currentUser.getId(), videoId);
-                isLiked = (favorite != null);
+            // 🐛 DEBUG: In ra console để kiểm tra
+            System.out.println("=== VIDEO DETAIL DEBUG ===");
+            System.out.println("Current Video ID: " + videoId);
+            System.out.println("Suggested Videos Count: " + (suggestedVideos != null ? suggestedVideos.size() : 0));
+            if (suggestedVideos != null) {
+                suggestedVideos.forEach(v -> System.out.println("  - " + v.getId() + ": " + v.getTitle()));
             }
+            System.out.println("========================");
             
-            // Gửi video sang JSP
+            // Gửi dữ liệu sang JSP
             req.setAttribute("video", video);
-            req.setAttribute("likeCount", likeCount);
-            req.setAttribute("shareCount", shareCount);
-            req.setAttribute("isLiked", isLiked);
+            req.setAttribute("suggestedVideos", suggestedVideos);
             
             // Forward sang trang chi tiết
             req.getRequestDispatcher("/views/client/video-detail.jsp").forward(req, resp);
