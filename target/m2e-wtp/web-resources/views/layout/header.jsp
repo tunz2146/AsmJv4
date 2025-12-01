@@ -24,7 +24,6 @@
         transform: translateY(-2px);
     }
 
-    /* Avatar + Username box */
     .nav-user-box {
         display: flex;
         align-items: center;
@@ -80,41 +79,35 @@
         padding: 8px 20px;
     }
 
-    /* Mobile responsive */
-    @media (max-width: 768px) {
-        .main-nav-item { display: none; }
-        .nav-more { display: block !important; }
-        .nav-username { max-width: 80px; }
-    }
-
-    /* Badge styles */
     .badge-admin {
         background: linear-gradient(135deg, #dc3545, #c82333);
         font-size: 0.7rem;
         padding: 3px 8px;
         margin-left: 5px;
     }
+
+    @media (max-width: 768px) {
+        .main-nav-item { display: none; }
+        .nav-more { display: block !important; }
+        .nav-username { max-width: 80px; }
+    }
 </style>
 
 <nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
     <div class="container">
 
-        <!-- Logo & Brand -->
         <a class="navbar-brand" href="<%=request.getContextPath()%>/home">
             <i class="bi bi-play-circle-fill me-2"></i>Online Entertainment
         </a>
 
-        <!-- Navbar Items -->
         <ul class="navbar-nav ms-auto align-items-center">
 
-            <!-- Trang chủ -->
             <li class="nav-item main-nav-item">
                 <a class="nav-link" href="<%=request.getContextPath()%>/home">
                     <i class="bi bi-house-door me-1"></i>Trang chủ
                 </a>
             </li>
 
-            <!-- Yêu thích (chỉ hiện khi đã login) -->
             <c:if test="${not empty sessionScope.currentUser}">
                 <li class="nav-item main-nav-item">
                     <a class="nav-link" href="<%=request.getContextPath()%>/favorites">
@@ -123,7 +116,6 @@
                 </li>
             </c:if>
 
-            <!-- Menu 3 chấm (mobile) -->
             <li class="nav-item dropdown nav-more" style="display:none;">
                 <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#">
                     <i class="bi bi-three-dots-vertical fs-4"></i>
@@ -144,18 +136,15 @@
                 </ul>
             </li>
 
-            <!-- User Account Dropdown -->
             <li class="nav-item dropdown">
                 <a class="nav-link d-flex align-items-center dropdown-toggle" 
                    id="accountDropdown" role="button" data-bs-toggle="dropdown">
                     
                     <div class="nav-user-box">
-                        <!-- Avatar -->
                         <div class="user-avatar">
                             <i class="bi bi-person-fill" style="font-size: 20px;"></i>
                         </div>
 
-                        <!-- Username -->
                         <span class="nav-username">
                             <c:choose>
                                 <c:when test="${not empty sessionScope.currentUser}">
@@ -172,13 +161,11 @@
                     </div>
                 </a>
 
-                <!-- Dropdown Menu -->
                 <ul class="dropdown-menu dropdown-menu-end shadow-lg">
                     
                     <c:choose>
                         <c:when test="${not empty sessionScope.currentUser}">
                             
-                            <!-- User Info Header -->
                             <li>
                                 <h6 class="dropdown-header">
                                     <i class="bi bi-person-circle me-2"></i>
@@ -192,7 +179,6 @@
                             </li>
                             <li><hr class="dropdown-divider"></li>
 
-                            <!-- Profile Actions -->
                             <li>
                                 <a class="dropdown-item" href="<%=request.getContextPath()%>/profile">
                                     <i class="bi bi-pencil-square me-2 text-primary"></i>
@@ -214,7 +200,6 @@
                                 </a>
                             </li>
 
-                            <!-- Admin Section -->
                             <c:if test="${sessionScope.currentUser.admin}">
                                 <li><hr class="dropdown-divider"></li>
                                 <li>
@@ -245,7 +230,6 @@
                                 </li>
                             </c:if>
 
-                            <!-- Logout -->
                             <li><hr class="dropdown-divider"></li>
                             <li>
                                 <a class="dropdown-item text-danger" href="<%=request.getContextPath()%>/logout">
@@ -256,7 +240,6 @@
 
                         </c:when>
 
-                        <!-- Not Logged In -->
                         <c:otherwise>
                             <li>
                                 <a class="dropdown-item" href="<%=request.getContextPath()%>/login">
