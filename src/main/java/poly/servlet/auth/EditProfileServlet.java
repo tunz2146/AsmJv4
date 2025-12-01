@@ -18,7 +18,7 @@ public class EditProfileServlet extends HttpServlet {
     
     private UserDAO userDAO = new UserDAOImpl();
     
-    // Regex patterns
+    // Email validation pattern
     private static final Pattern EMAIL_PATTERN = Pattern.compile(
         "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}$"
     );
@@ -27,14 +27,14 @@ public class EditProfileServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) 
             throws ServletException, IOException {
         
-        // Kiểm tra đã đăng nhập chưa
+        // Kiểm tra đăng nhập
         HttpSession session = req.getSession(false);
         if (session == null || session.getAttribute("currentUser") == null) {
             resp.sendRedirect(req.getContextPath() + "/login?message=required");
             return;
         }
         
-        // Hiển thị trang edit profile
+        // Hiển thị trang cập nhật thông tin
         req.getRequestDispatcher("/views/auth/edit-profile.jsp").forward(req, resp);
     }
     
@@ -46,7 +46,7 @@ public class EditProfileServlet extends HttpServlet {
         req.setCharacterEncoding("UTF-8");
         resp.setCharacterEncoding("UTF-8");
         
-        // Kiểm tra đã đăng nhập chưa
+        // Kiểm tra đăng nhập
         HttpSession session = req.getSession(false);
         if (session == null || session.getAttribute("currentUser") == null) {
             resp.sendRedirect(req.getContextPath() + "/login?message=required");
@@ -86,42 +86,29 @@ public class EditProfileServlet extends HttpServlet {
             return;
         }
         
-        // 4. Kiểm tra email đã tồn tại (nếu email thay đổi)
-        if (!email.equals(currentUser.getEmail())) {
+        // 4. Kiểm tra email đã tồn tại (trừ email của chính user)
+        try {
             User existingEmail = userDAO.findByEmail(email);
-            if (existingEmail != null) {
+            if (existingEmail != null && !existingEmail.getId().equals(currentUser.getId())) {
                 req.setAttribute("error", "Email đã được sử dụng bởi tài khoản khác!");
                 req.getRequestDispatcher("/views/auth/edit-profile.jsp").forward(req, resp);
                 return;
             }
-        }
-        
-        try {
-            // ========== CẬP NHẬT THÔNG TIN ==========
             
-            // Lấy user mới nhất từ database
-            User userToUpdate = userDAO.findById(currentUser.getId());
+            // ========== CẬP NHẬT USER ==========
             
-            if (userToUpdate == null) {
-                req.setAttribute("error", "Không tìm thấy thông tin người dùng!");
-                req.getRequestDispatcher("/views/auth/edit-profile.jsp").forward(req, resp);
-                return;
-            }
-            
-            // Cập nhật thông tin
-            userToUpdate.setFullname(fullname);
-            userToUpdate.setEmail(email);
+            currentUser.setFullname(fullname);
+            currentUser.setEmail(email);
             
             // Lưu vào database
-            userDAO.update(userToUpdate);
+            userDAO.update(currentUser);
             
             // Cập nhật lại session
-            session.setAttribute("currentUser", userToUpdate);
+            session.setAttribute("currentUser", currentUser);
             
-            // ========== THÀNH CÔNG ==========
+            System.out.println("✅ Cập nhật thông tin thành công: " + currentUser.getId());
             
-            System.out.println("✅ Cập nhật profile thành công: " + currentUser.getId());
-            
+            // Redirect với thông báo thành công
             req.setAttribute("message", "Cập nhật thông tin thành công!");
             req.getRequestDispatcher("/views/auth/edit-profile.jsp").forward(req, resp);
             

@@ -3,202 +3,280 @@
 
 <style>
     .navbar-custom {
-        background: linear-gradient(90deg, #0066ff, #4f8bff);
+        background: linear-gradient(90deg, #667eea, #764ba2);
         padding: 12px 0;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .navbar-brand {
+        font-weight: 700;
+        font-size: 1.3rem;
+        letter-spacing: 0.5px;
     }
 
     .nav-link {
         font-weight: 500;
-        margin-right: 18px;
+        margin-right: 15px;
+        transition: all 0.3s;
     }
 
-    /* Avatar + Username box cố định giống YouTube */
+    .nav-link:hover {
+        transform: translateY(-2px);
+    }
+
+    /* Avatar + Username box */
     .nav-user-box {
         display: flex;
         align-items: center;
-        max-width: 160px;       /* Ngăn giãn navbar */
+        max-width: 180px;
         overflow: hidden;
         white-space: nowrap;
     }
 
-    /* Tên user thu ngắn */
     .nav-username {
-        max-width: 110px;
+        max-width: 130px;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
         display: inline-block;
     }
 
-    .dropdown-menu {
-        border-radius: 12px;
-        padding: 10px 0;
+    .user-avatar {
+        width: 36px;
+        height: 36px;
+        background: rgba(255,255,255,0.3);
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-right: 10px;
+        border: 2px solid rgba(255,255,255,0.5);
     }
 
-    /* Hiện nút 3 chấm khi màn hình nhỏ */
+    .dropdown-menu {
+        border-radius: 12px;
+        padding: 8px 0;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        min-width: 250px;
+    }
+
+    .dropdown-item {
+        padding: 10px 20px;
+        transition: all 0.2s;
+    }
+
+    .dropdown-item:hover {
+        background: #f8f9fa;
+        padding-left: 25px;
+    }
+
+    .dropdown-divider {
+        margin: 8px 0;
+    }
+
+    .dropdown-header {
+        font-weight: 600;
+        color: #495057;
+        padding: 8px 20px;
+    }
+
+    /* Mobile responsive */
     @media (max-width: 768px) {
         .main-nav-item { display: none; }
         .nav-more { display: block !important; }
+        .nav-username { max-width: 80px; }
+    }
+
+    /* Badge styles */
+    .badge-admin {
+        background: linear-gradient(135deg, #dc3545, #c82333);
+        font-size: 0.7rem;
+        padding: 3px 8px;
+        margin-left: 5px;
     }
 </style>
 
-
-<nav class="navbar navbar-expand-lg navbar-dark navbar-custom shadow-sm">
+<nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
     <div class="container">
 
-        <!-- Logo -->
-        <a class="navbar-brand fw-bold fs-4" href="<%=request.getContextPath()%>/home">
+        <!-- Logo & Brand -->
+        <a class="navbar-brand" href="<%=request.getContextPath()%>/home">
             <i class="bi bi-play-circle-fill me-2"></i>Online Entertainment
         </a>
 
+        <!-- Navbar Items -->
         <ul class="navbar-nav ms-auto align-items-center">
 
-            <!-- Menu chính -->
+            <!-- Trang chủ -->
             <li class="nav-item main-nav-item">
                 <a class="nav-link" href="<%=request.getContextPath()%>/home">
                     <i class="bi bi-house-door me-1"></i>Trang chủ
                 </a>
             </li>
 
+            <!-- Yêu thích (chỉ hiện khi đã login) -->
             <c:if test="${not empty sessionScope.currentUser}">
-                <!-- ✅ THÊM: My Videos -->
-                <li class="nav-item main-nav-item">
-                    <a class="nav-link" href="<%=request.getContextPath()%>/my-videos">
-                        <i class="bi bi-camera-video me-1"></i>Video của tôi
-                    </a>
-                </li>
-                
                 <li class="nav-item main-nav-item">
                     <a class="nav-link" href="<%=request.getContextPath()%>/favorites">
-                        <i class="bi bi-heart me-1"></i>Yêu thích
+                        <i class="bi bi-heart-fill me-1"></i>Yêu thích
                     </a>
                 </li>
             </c:if>
 
-            <!-- Nút 3 chấm khi màn nhỏ -->
+            <!-- Menu 3 chấm (mobile) -->
             <li class="nav-item dropdown nav-more" style="display:none;">
-                <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown">
-                    <i class="bi bi-three-dots fs-4"></i>
+                <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#">
+                    <i class="bi bi-three-dots-vertical fs-4"></i>
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end">
-                    <li><a class="dropdown-item" href="<%=request.getContextPath()%>/home">
-                        <i class="bi bi-house-door me-2"></i>Trang chủ
-                    </a></li>
-
+                    <li>
+                        <a class="dropdown-item" href="<%=request.getContextPath()%>/home">
+                            <i class="bi bi-house-door me-2"></i>Trang chủ
+                        </a>
+                    </li>
                     <c:if test="${not empty sessionScope.currentUser}">
-                        <!-- ✅ THÊM: My Videos trong mobile menu -->
-                        <li><a class="dropdown-item" href="<%=request.getContextPath()%>/my-videos">
-                            <i class="bi bi-camera-video me-2"></i>Video của tôi
-                        </a></li>
-                        
-                        <li><a class="dropdown-item" href="<%=request.getContextPath()%>/favorites">
-                            <i class="bi bi-heart me-2"></i>Yêu thích
-                        </a></li>
+                        <li>
+                            <a class="dropdown-item" href="<%=request.getContextPath()%>/favorites">
+                                <i class="bi bi-heart-fill me-2"></i>Yêu thích
+                            </a>
+                        </li>
                     </c:if>
                 </ul>
             </li>
 
-
-            <!-- User account -->
+            <!-- User Account Dropdown -->
             <li class="nav-item dropdown">
-                <a class="nav-link d-flex align-items-center" id="accountDropdown"
-                   role="button" data-bs-toggle="dropdown" style="padding-right: 0;">
-
-                    <!-- Hộp user cố định chiều rộng -->
+                <a class="nav-link d-flex align-items-center dropdown-toggle" 
+                   id="accountDropdown" role="button" data-bs-toggle="dropdown">
+                    
                     <div class="nav-user-box">
-                        <div style="
-                            width: 32px; height: 32px;
-                            background: #fff3;
-                            border-radius: 50%;
-                            display: flex;
-                            justify-content: center;
-                            align-items: center;
-                            margin-right: 8px;">
-                            <i class="bi bi-person-fill" style="font-size: 18px;"></i>
+                        <!-- Avatar -->
+                        <div class="user-avatar">
+                            <i class="bi bi-person-fill" style="font-size: 20px;"></i>
                         </div>
 
-                        <!-- Username thu ngắn -->
+                        <!-- Username -->
                         <span class="nav-username">
                             <c:choose>
                                 <c:when test="${not empty sessionScope.currentUser}">
                                     ${sessionScope.currentUser.fullname}
+                                    <c:if test="${sessionScope.currentUser.admin}">
+                                        <span class="badge badge-admin">Admin</span>
+                                    </c:if>
                                 </c:when>
-                                <c:otherwise>Tài khoản</c:otherwise>
+                                <c:otherwise>
+                                    Tài khoản
+                                </c:otherwise>
                             </c:choose>
                         </span>
                     </div>
-
-                    <i class="bi bi-caret-down-fill ms-1"></i>
                 </a>
 
-                <ul class="dropdown-menu dropdown-menu-end">
-
+                <!-- Dropdown Menu -->
+                <ul class="dropdown-menu dropdown-menu-end shadow-lg">
+                    
                     <c:choose>
                         <c:when test="${not empty sessionScope.currentUser}">
-
-                            <li><h6 class="dropdown-header">${sessionScope.currentUser.username}</h6></li>
+                            
+                            <!-- User Info Header -->
+                            <li>
+                                <h6 class="dropdown-header">
+                                    <i class="bi bi-person-circle me-2"></i>
+                                    ${sessionScope.currentUser.fullname}
+                                </h6>
+                            </li>
+                            <li>
+                                <span class="dropdown-item-text text-muted small">
+                                    <i class="bi bi-at"></i> ${sessionScope.currentUser.id}
+                                </span>
+                            </li>
                             <li><hr class="dropdown-divider"></li>
 
-                            <!-- ✅ THÊM: My Videos trong user dropdown -->
-                            <li>
-                                <a class="dropdown-item" href="<%=request.getContextPath()%>/my-videos">
-                                    <i class="bi bi-camera-video me-2"></i>Video của tôi
-                                </a>
-                            </li>
-
-                            <li>
-                                <a class="dropdown-item" href="<%=request.getContextPath()%>/favorites">
-                                    <i class="bi bi-heart me-2"></i>Yêu thích
-                                </a>
-                            </li>
-
-                            <li><hr class="dropdown-divider"></li>
-
+                            <!-- Profile Actions -->
                             <li>
                                 <a class="dropdown-item" href="<%=request.getContextPath()%>/profile">
-                                    <i class="bi bi-pencil-square me-2"></i>Cập nhật thông tin
+                                    <i class="bi bi-pencil-square me-2 text-primary"></i>
+                                    Cập nhật thông tin
                                 </a>
                             </li>
 
                             <li>
                                 <a class="dropdown-item" href="<%=request.getContextPath()%>/change-password">
-                                    <i class="bi bi-key me-2"></i>Đổi mật khẩu
+                                    <i class="bi bi-key me-2 text-warning"></i>
+                                    Đổi mật khẩu
                                 </a>
                             </li>
 
+                            <li>
+                                <a class="dropdown-item" href="<%=request.getContextPath()%>/favorites">
+                                    <i class="bi bi-heart me-2 text-danger"></i>
+                                    Video yêu thích
+                                </a>
+                            </li>
+
+                            <!-- Admin Section -->
                             <c:if test="${sessionScope.currentUser.admin}">
                                 <li><hr class="dropdown-divider"></li>
-                                <li class="dropdown-header text-danger">
-                                    <i class="bi bi-shield-check"></i> Quản trị
+                                <li>
+                                    <h6 class="dropdown-header text-danger">
+                                        <i class="bi bi-shield-check"></i> Quản trị viên
+                                    </h6>
                                 </li>
 
-                                <li><a class="dropdown-item" href="<%=request.getContextPath()%>/admin/videos">
-                                    <i class="bi bi-camera-video me-2"></i>Quản lý Video</a></li>
+                                <li>
+                                    <a class="dropdown-item" href="<%=request.getContextPath()%>/admin/videos">
+                                        <i class="bi bi-camera-video me-2"></i>
+                                        Quản lý Video
+                                    </a>
+                                </li>
 
-                                <li><a class="dropdown-item" href="<%=request.getContextPath()%>/admin/users">
-                                    <i class="bi bi-people me-2"></i>Quản lý User</a></li>
+                                <li>
+                                    <a class="dropdown-item" href="<%=request.getContextPath()%>/admin/users">
+                                        <i class="bi bi-people me-2"></i>
+                                        Quản lý User
+                                    </a>
+                                </li>
 
-                                <li><a class="dropdown-item" href="<%=request.getContextPath()%>/admin/reports">
-                                    <i class="bi bi-graph-up me-2"></i>Báo cáo</a></li>
+                                <li>
+                                    <a class="dropdown-item" href="<%=request.getContextPath()%>/admin/reports">
+                                        <i class="bi bi-graph-up me-2"></i>
+                                        Báo cáo thống kê
+                                    </a>
+                                </li>
                             </c:if>
 
+                            <!-- Logout -->
                             <li><hr class="dropdown-divider"></li>
-
                             <li>
                                 <a class="dropdown-item text-danger" href="<%=request.getContextPath()%>/logout">
-                                    <i class="bi bi-box-arrow-right me-2"></i>Đăng xuất
+                                    <i class="bi bi-box-arrow-right me-2"></i>
+                                    Đăng xuất
                                 </a>
                             </li>
 
                         </c:when>
 
+                        <!-- Not Logged In -->
                         <c:otherwise>
-                            <li><a class="dropdown-item" href="<%=request.getContextPath()%>/login">
-                                <i class="bi bi-box-arrow-in-right me-2"></i>Đăng nhập
-                            </a></li>
-                            <li><a class="dropdown-item" href="<%=request.getContextPath()%>/register">
-                                <i class="bi bi-person-plus me-2"></i>Đăng ký
-                            </a></li>
+                            <li>
+                                <a class="dropdown-item" href="<%=request.getContextPath()%>/login">
+                                    <i class="bi bi-box-arrow-in-right me-2 text-primary"></i>
+                                    Đăng nhập
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="<%=request.getContextPath()%>/register">
+                                    <i class="bi bi-person-plus me-2 text-success"></i>
+                                    Đăng ký
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item" href="<%=request.getContextPath()%>/home">
+                                    <i class="bi bi-house-door me-2"></i>
+                                    Trang chủ
+                                </a>
+                            </li>
                         </c:otherwise>
                     </c:choose>
 
