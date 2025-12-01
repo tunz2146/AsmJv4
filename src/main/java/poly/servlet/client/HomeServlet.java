@@ -12,21 +12,25 @@ import poly.entity.Video;
 import java.io.IOException;
 import java.util.List;
 
-@WebServlet("/home")
+@WebServlet({"/home", "/"})
 public class HomeServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
     
     private VideoDAO videoDAO = new VideoDAOImpl();
+    
+    // Số video mỗi trang
+    private static final int PAGE_SIZE = 6;
     
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) 
             throws ServletException, IOException {
         
         try {
-            // Lấy page hiện tại (mặc định là 1)
+            // Lấy page hiện tại từ parameter (mặc định là 1)
             String pageParam = req.getParameter("page");
             int currentPage = 1;
-            if (pageParam != null) {
+            
+            if (pageParam != null && !pageParam.trim().isEmpty()) {
                 try {
                     currentPage = Integer.parseInt(pageParam);
                     if (currentPage < 1) {
@@ -37,19 +41,17 @@ public class HomeServlet extends HttpServlet {
                 }
             }
             
-            // Số video mỗi trang (theo yêu cầu: 6 video)
-            int pageSize = 6;
-            
             // Lấy danh sách video với phân trang
-            List<Video> videos = videoDAO.findWithPagination(currentPage, pageSize);
+            List<Video> videos = videoDAO.findWithPagination(currentPage, PAGE_SIZE);
             
             // Tính tổng số trang
             int totalVideos = videoDAO.countAll();
-            int totalPages = (int) Math.ceil((double) totalVideos / pageSize);
+            int totalPages = (int) Math.ceil((double) totalVideos / PAGE_SIZE);
             
             // Đảm bảo currentPage không vượt quá totalPages
             if (currentPage > totalPages && totalPages > 0) {
                 currentPage = totalPages;
+                videos = videoDAO.findWithPagination(currentPage, PAGE_SIZE);
             }
             
             // Gửi dữ liệu sang JSP
@@ -57,6 +59,7 @@ public class HomeServlet extends HttpServlet {
             req.setAttribute("currentPage", currentPage);
             req.setAttribute("totalPages", totalPages);
             req.setAttribute("totalVideos", totalVideos);
+            req.setAttribute("pageSize", PAGE_SIZE);
             
             // Forward sang trang home.jsp
             req.getRequestDispatcher("/views/client/home.jsp").forward(req, resp);

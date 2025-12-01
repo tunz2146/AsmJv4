@@ -46,17 +46,15 @@ public class VideoDetailServlet extends HttpServlet {
             // Reload lại video để lấy số views mới
             video = videoDAO.findById(videoId);
             
-            // ✅ LẤY 5 VIDEO ĐỀ XUẤT (trừ video hiện tại)
-            List<Video> suggestedVideos = videoDAO.findRandomSuggestions(videoId, 5);
+            // ✅✅✅ QUAN TRỌNG: DÙNG METHOD MỚI - LẤY VIDEO ĐỀ XUẤT
+            System.out.println("=== VIDEO DETAIL SERVLET ===");
+            System.out.println("Current Video: " + videoId);
+            System.out.println("Calling findSuggestedVideos()...");
             
-            // 🐛 DEBUG: In ra console để kiểm tra
-            System.out.println("=== VIDEO DETAIL DEBUG ===");
-            System.out.println("Current Video ID: " + videoId);
-            System.out.println("Suggested Videos Count: " + (suggestedVideos != null ? suggestedVideos.size() : 0));
-            if (suggestedVideos != null) {
-                suggestedVideos.forEach(v -> System.out.println("  - " + v.getId() + ": " + v.getTitle()));
-            }
-            System.out.println("========================");
+            List<Video> suggestedVideos = videoDAO.findSuggestedVideos(videoId, 5);
+            
+            System.out.println("Suggested videos received: " + (suggestedVideos != null ? suggestedVideos.size() : 0));
+            System.out.println("===========================");
             
             // Gửi dữ liệu sang JSP
             req.setAttribute("video", video);
@@ -67,6 +65,7 @@ public class VideoDetailServlet extends HttpServlet {
             
         } catch (Exception e) {
             e.printStackTrace();
+            System.err.println("ERROR in VideoDetailServlet: " + e.getMessage());
             req.setAttribute("error", "Lỗi khi tải video: " + e.getMessage());
             req.getRequestDispatcher("/views/client/home.jsp").forward(req, resp);
         }

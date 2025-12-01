@@ -10,12 +10,14 @@ import java.util.List;
 
 public class VideoDAOImpl implements VideoDAO {
     
+    // ==================== CRUD CƠ BẢN ====================
+    
     @Override
     public List<Video> findAll() {
         EntityManager em = JPAUtils.getEntityManager();
         try {
             TypedQuery<Video> query = em.createQuery(
-                "SELECT v FROM Video v ORDER BY v.views DESC", 
+                "SELECT v FROM Video v WHERE v.active = true ORDER BY v.id DESC", 
                 Video.class
             );
             return query.getResultList();
@@ -39,6 +41,15 @@ public class VideoDAOImpl implements VideoDAO {
         EntityManager em = JPAUtils.getEntityManager();
         try {
             em.getTransaction().begin();
+            
+            // Set default values nếu null
+            if (video.getViews() == null) {
+                video.setViews(0);
+            }
+            if (video.getActive() == null) {
+                video.setActive(true);
+            }
+            
             em.persist(video);
             em.getTransaction().commit();
         } catch (Exception e) {
@@ -88,14 +99,15 @@ public class VideoDAOImpl implements VideoDAO {
         }
     }
     
-    // ===== METHODS CŨ =====
+    // ==================== PHÂN TRANG ====================
     
     @Override
     public List<Video> findWithPagination(int page, int size) {
         EntityManager em = JPAUtils.getEntityManager();
         try {
             TypedQuery<Video> query = em.createQuery(
-                "SELECT v FROM Video v WHERE v.active = true ORDER BY v.views DESC", 
+                "SELECT v FROM Video v WHERE v.active = true " +
+                "ORDER BY v.id DESC, v.views DESC", 
                 Video.class
             );
             query.setFirstResult((page - 1) * size);
@@ -119,6 +131,8 @@ public class VideoDAOImpl implements VideoDAO {
             JPAUtils.closeEntityManager(em);
         }
     }
+    
+    // ==================== VIDEO VIEWS ====================
     
     @Override
     public void incrementViews(String videoId) {
@@ -146,7 +160,8 @@ public class VideoDAOImpl implements VideoDAO {
         EntityManager em = JPAUtils.getEntityManager();
         try {
             TypedQuery<Video> query = em.createQuery(
-                "SELECT v FROM Video v WHERE v.active = true ORDER BY v.views DESC", 
+                "SELECT v FROM Video v WHERE v.active = true " +
+                "ORDER BY v.views DESC, v.id DESC", 
                 Video.class
             );
             query.setMaxResults(6);
@@ -156,43 +171,23 @@ public class VideoDAOImpl implements VideoDAO {
         }
     }
     
-    // ===== METHODS MỚI - RANDOM =====
+    // ==================== VIDEO ĐỀ CỬ ====================
     
-    /**
-     * Lấy videos KHÔNG SẮP XẾP theo views (thứ tự tự nhiên)
-     */
     @Override
-    public List<Video> findRandomWithPagination(int page, int size) {
+    public List<Video> findSuggestedVideos(String currentVideoId, int limit) {
         EntityManager em = JPAUtils.getEntityManager();
         try {
+            // Query lấy video đề cử:
+            // 1. Loại trừ video hiện tại
+            // 2. Chỉ lấy video active
+            // 3. Sắp xếp: video mới nhất (ID DESC) → nhiều views nhất
             TypedQuery<Video> query = em.createQuery(
-                "SELECT v FROM Video v WHERE v.active = true ORDER BY v.id", 
+                "SELECT v FROM Video v " +
+                "WHERE v.active = true AND v.id != :currentId " +
+                "ORDER BY v.id DESC, v.views DESC", 
                 Video.class
             );
-            query.setFirstResult((page - 1) * size);
-            query.setMaxResults(size);
-            return query.getResultList();
-        } finally {
-            JPAUtils.closeEntityManager(em);
-        }
-    }
-    
-    /**
-     * Lấy video đề xuất (trừ video hiện tại) - Không sắp xếp theo views
-     * @param excludeVideoId Video ID cần loại trừ
-     * @param limit Số lượng video cần lấy
-     * @return Danh sách video theo thứ tự ID
-     */
-    @Override
-    public List<Video> findRandomSuggestions(String excludeVideoId, int limit) {
-        EntityManager em = JPAUtils.getEntityManager();
-        try {
-            TypedQuery<Video> query = em.createQuery(
-                "SELECT v FROM Video v WHERE v.active = true AND v.id != :excludeId " +
-                "ORDER BY v.id", 
-                Video.class
-            );
-            query.setParameter("excludeId", excludeVideoId);
+            query.setParameter("currentId", currentVideoId);
             query.setMaxResults(limit);
             return query.getResultList();
         } finally {
