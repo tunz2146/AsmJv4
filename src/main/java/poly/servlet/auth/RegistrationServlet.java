@@ -1,26 +1,23 @@
 package poly.servlet.auth;
 
 import poly.entity.User;
-import poly.service.AuthService;
-import poly.service.EmailService;
+import poly.dao.UserDAO;
+import poly.daoimpl.UserDAOImpl;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.regex.Pattern;
 
 @WebServlet("/register")
 public class RegistrationServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
     
-    private AuthService authService = new AuthService();
-    private EmailService emailService = new EmailService();
+    private UserDAO userDAO = new UserDAOImpl();
     
-    // Regex patterns
+    // Regex patterns cho validation
     private static final Pattern EMAIL_PATTERN = Pattern.compile(
         "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}$"
     );
@@ -34,12 +31,17 @@ public class RegistrationServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) 
             throws ServletException, IOException {
-        req.getRequestDispatcher("/views/registration.jsp").forward(req, resp);
+        // Hiển thị trang đăng ký
+        req.getRequestDispatcher("/views/auth/registration.jsp").forward(req, resp);
     }
     
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) 
             throws ServletException, IOException {
+        
+        // Set encoding
+        req.setCharacterEncoding("UTF-8");
+        resp.setCharacterEncoding("UTF-8");
         
         // Lấy dữ liệu từ form
         String username = req.getParameter("username");
@@ -55,127 +57,119 @@ public class RegistrationServlet extends HttpServlet {
         fullname = (fullname != null) ? fullname.trim() : "";
         email = (email != null) ? email.trim() : "";
         
-        // Validate empty fields
+        // ========== VALIDATION ==========
+        
+        // 1. Kiểm tra trống
         if (username.isEmpty() || password.isEmpty() || 
             fullname.isEmpty() || email.isEmpty()) {
-            setErrorAndForward(req, resp, "Vui lòng điền đầy đủ thông tin!");
+            setErrorAndForward(req, resp, "Vui lòng điền đầy đủ thông tin!", 
+                username, fullname, email);
             return;
         }
         
-        // Validate username format
+        // 2. Validate username format
         if (!USERNAME_PATTERN.matcher(username).matches()) {
             setErrorAndForward(req, resp, 
-                "Tên đăng nhập phải từ 3-20 ký tự, chỉ chứa chữ, số, dấu gạch dưới và gạch ngang!");
+                "Tên đăng nhập phải từ 3-20 ký tự, chỉ chứa chữ, số, gạch dưới và gạch ngang!", 
+                username, fullname, email);
             return;
         }
         
-        // Validate fullname length
+        // 3. Validate fullname length
         if (fullname.length() < 2 || fullname.length() > 50) {
-            setErrorAndForward(req, resp, "Họ tên phải từ 2-50 ký tự!");
+            setErrorAndForward(req, resp, 
+                "Họ tên phải từ 2-50 ký tự!", 
+                username, fullname, email);
             return;
         }
         
-        // Validate email format
+        // 4. Validate email format
         if (!EMAIL_PATTERN.matcher(email).matches()) {
-            setErrorAndForward(req, resp, "Email không hợp lệ!");
+            setErrorAndForward(req, resp, 
+                "Email không hợp lệ!", 
+                username, fullname, email);
             return;
         }
         
-        // Validate password match
+        // 5. Validate password match
         if (!password.equals(confirmPassword)) {
-            setErrorAndForward(req, resp, "Mật khẩu xác nhận không khớp!");
+            setErrorAndForward(req, resp, 
+                "Mật khẩu xác nhận không khớp!", 
+                username, fullname, email);
             return;
         }
         
-        // Validate password strength
+        // 6. Validate password strength
         if (!PASSWORD_PATTERN.matcher(password).matches()) {
             setErrorAndForward(req, resp, 
-                "Mật khẩu phải có ít nhất 6 ký tự, bao gồm chữ hoa, chữ thường và số!");
+                "Mật khẩu phải có ít nhất 6 ký tự, bao gồm chữ hoa, chữ thường và số!", 
+                username, fullname, email);
             return;
         }
         
-        // Check if username exists
-        if (authService.isUsernameExists(username)) {
-            setErrorAndForward(req, resp, "Tên đăng nhập đã tồn tại!");
-            return;
-        }
-        
-        // Check if email exists
-        if (authService.isEmailExists(email)) {
-            setErrorAndForward(req, resp, "Email đã được sử dụng!");
-            return;
-        }
+        // ========== KIỂM TRA TỒN TẠI ==========
         
         try {
-            // Hash password
-            String hashedPassword = hashPassword(password);
+            // 7. Kiểm tra username đã tồn tại
+            User existingUser = userDAO.findById(username);
+            if (existingUser != null) {
+                setErrorAndForward(req, resp, 
+                    "Tên đăng nhập đã tồn tại!", 
+                    username, fullname, email);
+                return;
+            }
             
-            // Tạo user mới
+            // 8. Kiểm tra email đã tồn tại
+            User existingEmail = userDAO.findByEmail(email);
+            if (existingEmail != null) {
+                setErrorAndForward(req, resp, 
+                    "Email đã được sử dụng!", 
+                    username, fullname, email);
+                return;
+            }
+            
+            // ========== TẠO USER MỚI ==========
+            
             User newUser = new User();
-            newUser.setUsername(username);
-            newUser.setPassword(hashedPassword);
+            newUser.setId(username);
+            newUser.setPassword(password);  // Lưu plain text (không hash)
             newUser.setFullname(fullname);
             newUser.setEmail(email);
             newUser.setAdmin(false);
-            // newUser.setActive(true);
             
             // Lưu vào database
-            boolean success = authService.register(newUser);
+            userDAO.create(newUser);
             
-            if (success) {
-                // Gửi email chào mừng (không block nếu fail)
-                try {
-                    emailService.sendWelcomeEmail(email, fullname);
-                } catch (Exception emailEx) {
-                    // Log lỗi nhưng không ảnh hưởng đến đăng ký
-                    System.err.println("Failed to send welcome email: " + emailEx.getMessage());
-                }
-                
-                // Redirect về login với thông báo thành công
-                resp.sendRedirect(req.getContextPath() + "/login?message=register_success");
-            } else {
-                setErrorAndForward(req, resp, "Đăng ký thất bại! Vui lòng thử lại.");
-            }
+            // ========== THÀNH CÔNG ==========
+            
+            System.out.println("✅ Đăng ký thành công: " + username);
+            
+            // Redirect về login với thông báo thành công
+            resp.sendRedirect(req.getContextPath() + "/login?message=register_success");
             
         } catch (Exception e) {
             e.printStackTrace();
-            setErrorAndForward(req, resp, "Có lỗi xảy ra: " + e.getMessage());
+            setErrorAndForward(req, resp, 
+                "Có lỗi xảy ra: " + e.getMessage(), 
+                username, fullname, email);
         }
-    }
-    
-    /**
-     * Hash password sử dụng SHA-256
-     * @param password Password gốc
-     * @return Password đã hash
-     */
-    private String hashPassword(String password) throws NoSuchAlgorithmException {
-        MessageDigest md = MessageDigest.getInstance("SHA-256");
-        byte[] hash = md.digest(password.getBytes());
-        StringBuilder hexString = new StringBuilder();
-        
-        for (byte b : hash) {
-            String hex = Integer.toHexString(0xff & b);
-            if (hex.length() == 1) {
-                hexString.append('0');
-            }
-            hexString.append(hex);
-        }
-        
-        return hexString.toString();
     }
     
     /**
      * Helper method để set error và forward
      */
     private void setErrorAndForward(HttpServletRequest req, HttpServletResponse resp, 
-                                    String errorMessage) throws ServletException, IOException {
+                                    String errorMessage, String username, 
+                                    String fullname, String email) 
+            throws ServletException, IOException {
+        
         req.setAttribute("error", errorMessage);
         
         // Giữ lại các giá trị đã nhập (trừ password)
-        req.setAttribute("username", req.getParameter("username"));
-        req.setAttribute("fullname", req.getParameter("fullname"));
-        req.setAttribute("email", req.getParameter("email"));
+        req.setAttribute("username", username);
+        req.setAttribute("fullname", fullname);
+        req.setAttribute("email", email);
         
-        req.getRequestDispatcher("/views/registration.jsp").forward(req, resp);
+        req.getRequestDispatcher("/views/auth/registration.jsp").forward(req, resp);
     }
 }

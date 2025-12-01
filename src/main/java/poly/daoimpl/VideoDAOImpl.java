@@ -16,6 +16,7 @@ public class VideoDAOImpl implements VideoDAO {
     public List<Video> findAll() {
         EntityManager em = JPAUtils.getEntityManager();
         try {
+            // Sắp xếp CỐ ĐỊNH theo ID giảm dần (video mới nhất trước)
             TypedQuery<Video> query = em.createQuery(
                 "SELECT v FROM Video v WHERE v.active = true ORDER BY v.id DESC", 
                 Video.class
@@ -105,9 +106,10 @@ public class VideoDAOImpl implements VideoDAO {
     public List<Video> findWithPagination(int page, int size) {
         EntityManager em = JPAUtils.getEntityManager();
         try {
+            // ✅ SẮP XẾP CỐ ĐỊNH: ID giảm dần (video mới nhất trước)
+            // Điều này đảm bảo thứ tự KHÔNG BAO GIỜ thay đổi khi reload
             TypedQuery<Video> query = em.createQuery(
-                "SELECT v FROM Video v WHERE v.active = true " +
-                "ORDER BY v.id DESC, v.views DESC", 
+                "SELECT v FROM Video v WHERE v.active = true ORDER BY v.id DESC", 
                 Video.class
             );
             query.setFirstResult((page - 1) * size);
@@ -159,6 +161,7 @@ public class VideoDAOImpl implements VideoDAO {
     public List<Video> findTop6ByViews() {
         EntityManager em = JPAUtils.getEntityManager();
         try {
+            // Sắp xếp theo views giảm dần, nếu bằng nhau thì ID giảm dần
             TypedQuery<Video> query = em.createQuery(
                 "SELECT v FROM Video v WHERE v.active = true " +
                 "ORDER BY v.views DESC, v.id DESC", 
@@ -177,14 +180,11 @@ public class VideoDAOImpl implements VideoDAO {
     public List<Video> findSuggestedVideos(String currentVideoId, int limit) {
         EntityManager em = JPAUtils.getEntityManager();
         try {
-            // Query lấy video đề cử:
-            // 1. Loại trừ video hiện tại
-            // 2. Chỉ lấy video active
-            // 3. Sắp xếp: video mới nhất (ID DESC) → nhiều views nhất
+            // Lấy video đề cử: loại trừ video hiện tại, sắp xếp theo ID giảm dần
             TypedQuery<Video> query = em.createQuery(
                 "SELECT v FROM Video v " +
                 "WHERE v.active = true AND v.id != :currentId " +
-                "ORDER BY v.id DESC, v.views DESC", 
+                "ORDER BY v.id DESC", 
                 Video.class
             );
             query.setParameter("currentId", currentVideoId);

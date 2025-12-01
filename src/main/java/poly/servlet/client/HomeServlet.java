@@ -41,7 +41,7 @@ public class HomeServlet extends HttpServlet {
                 }
             }
             
-            // Lấy danh sách video với phân trang
+            // ✅ SỬA LẠI: Dùng findWithPagination thay vì findWithPaginationNoSort
             List<Video> videos = videoDAO.findWithPagination(currentPage, PAGE_SIZE);
             
             // Tính tổng số trang
