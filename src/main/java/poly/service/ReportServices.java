@@ -1,4 +1,4 @@
-// File: src/main/java/poly/service/ReportServices.java
+// File: src/main/java/poly/service/ReportService.java
 package poly.service;
 
 import poly.util.JPAUtils;
@@ -281,6 +281,15 @@ public class ReportServices {
                 results.get(month - 1).put("total", total);
             }
             
+        } catch (Exception e) {
+            e.printStackTrace();
+            // Nếu lỗi, trả về 12 tháng với giá trị 0
+            for (int i = 1; i <= 12; i++) {
+                Map<String, Object> map = new HashMap<>();
+                map.put("month", i);
+                map.put("total", 0);
+                results.add(map);
+            }
         } finally {
             JPAUtils.closeEntityManager(em);
         }
@@ -321,6 +330,15 @@ public class ReportServices {
                 results.get(month - 1).put("total", total);
             }
             
+        } catch (Exception e) {
+            e.printStackTrace();
+            // Nếu lỗi, trả về 12 tháng với giá trị 0
+            for (int i = 1; i <= 12; i++) {
+                Map<String, Object> map = new HashMap<>();
+                map.put("month", i);
+                map.put("total", 0);
+                results.add(map);
+            }
         } finally {
             JPAUtils.closeEntityManager(em);
         }

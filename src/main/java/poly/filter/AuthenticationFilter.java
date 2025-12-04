@@ -6,31 +6,44 @@ import jakarta.servlet.annotation.WebFilter;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import poly.entity.User;
+
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
 /**
  * Filter để kiểm tra authentication
- * Chỉ cho phép truy cập các trang cần login nếu đã đăng nhập
  */
 @WebFilter("/*")
 public class AuthenticationFilter implements Filter {
     
-    // Danh sách các URL không cần login
+    // Danh sách các URL không cần login (Public URLs)
     private static final List<String> PUBLIC_URLS = Arrays.asList(
+        "/",
+        "/home",
         "/login",
         "/logout",
-        "/",
-        "/index.jsp"
+        "/register",
+        "/forgot-password",
+        "/video-detail",
+        "/views/",
+        "/resources/",
+        "/assets/",
+        "/css/",
+        "/js/",
+        "/images/"
     );
     
-    // Danh sách các URL cần login
+    // Danh sách các URL cần login (Protected URLs)
     private static final List<String> PROTECTED_URLS = Arrays.asList(
-        "/user-favorites",
-        "/all-favorites",
-        "/shares",
-        "/share-statistics"
+        "/favorites",
+        "/my-favorites",
+        "/share",
+        "/like-video",
+        "/unlike-video",
+        "/profile",
+        "/change-password"
     );
     
     @Override
@@ -44,33 +57,84 @@ public class AuthenticationFilter implements Filter {
         String contextPath = req.getContextPath();
         String path = uri.substring(contextPath.length());
         
+        // ===== DEBUG LOG =====
+        System.out.println("🔍 AuthenticationFilter - Path: " + path);
+        
         // Bỏ qua các resources (css, js, images)
         if (path.startsWith("/resources/") || 
+            path.startsWith("/assets/") ||
+            path.startsWith("/css/") ||
+            path.startsWith("/js/") ||
+            path.startsWith("/images/") ||
             path.endsWith(".css") || 
             path.endsWith(".js") || 
             path.endsWith(".png") || 
-            path.endsWith(".jpg")) {
+            path.endsWith(".jpg") ||
+            path.endsWith(".ico")) {
             chain.doFilter(request, response);
             return;
         }
         
-        // Kiểm tra xem URL có cần authentication không
+        // ===== XỬ LÝ ADMIN URLS =====
+        if (path.startsWith("/admin/")) {
+            System.out.println("   🔐 Admin URL detected");
+            
+            HttpSession session = req.getSession(false);
+            
+            // Kiểm tra có session không
+            if (session == null || session.getAttribute("currentUser") == null) {
+                System.out.println("   ❌ No session/user - Redirect to login");
+                resp.sendRedirect(contextPath + "/login?message=required&returnUrl=" + 
+                                 java.net.URLEncoder.encode(uri, "UTF-8"));
+                return;
+            }
+            
+            // Kiểm tra có phải admin không
+            User user = (User) session.getAttribute("currentUser");
+            System.out.println("   👤 User: " + user.getId() + " | Admin: " + user.getAdmin());
+            
+            if (user.getAdmin() == null || !user.getAdmin()) {
+                System.out.println("   ❌ User is NOT admin - Redirect to home");
+                resp.sendRedirect(contextPath + "/home?error=unauthorized");
+                return;
+            }
+            
+            System.out.println("   ✅ Admin access granted!");
+            chain.doFilter(request, response);
+            return;
+        }
+        
+        // ===== XỬ LÝ PROTECTED URLS =====
         boolean needsAuth = PROTECTED_URLS.stream()
             .anyMatch(url -> path.startsWith(url));
         
         if (needsAuth) {
+            System.out.println("   🔐 Protected URL - Checking auth...");
+            
             HttpSession session = req.getSession(false);
             
             if (session == null || session.getAttribute("currentUser") == null) {
-                // Chưa login - lưu URL để redirect sau khi login
+                System.out.println("   ❌ Not logged in - Redirect to login");
+                
+                // Lưu URL để redirect sau khi login
                 if (session == null) {
                     session = req.getSession(true);
                 }
-                session.setAttribute("returnUrl", req.getRequestURI());
+                session.setAttribute("returnUrl", uri);
                 
                 resp.sendRedirect(contextPath + "/login?message=required");
                 return;
             }
+            
+            System.out.println("   ✅ Auth passed!");
+        }
+        
+        // ===== XỬ LÝ PUBLIC URLS =====
+        boolean isPublic = PUBLIC_URLS.stream()
+            .anyMatch(url -> path.equals(url) || path.startsWith(url));
+        
+        if (isPublic) {
+            System.out.println("   🌍 Public URL - No auth required");
         }
         
         // Cho phép tiếp tục
@@ -79,11 +143,13 @@ public class AuthenticationFilter implements Filter {
     
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
-        // Initialization
+        System.out.println("╔═══════════════════════════════════════════════════╗");
+        System.out.println("║  AuthenticationFilter initialized                ║");
+        System.out.println("╚═══════════════════════════════════════════════════╝");
     }
     
     @Override
     public void destroy() {
-        // Cleanup
+        System.out.println("AuthenticationFilter destroyed");
     }
 }
