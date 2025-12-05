@@ -69,6 +69,7 @@
                     <p class="mb-0">Dashboard & Analytics - Online Entertainment</p>
                 </div>
                 <div>
+                    <span class="me-3">${sessionScope.currentUser.fullname}</span>
                     <a href="<%=request.getContextPath()%>/admin/videos" class="btn btn-light btn-sm me-2">
                         <i class="bi bi-film"></i> Videos
                     </a>
@@ -142,7 +143,7 @@
                 <div class="report-section">
                     <h5 class="mb-3">
                         <i class="bi bi-graph-up text-danger me-2"></i>
-                        Favorites theo tháng (2024)
+                        Favorites theo tháng (2025)
                     </h5>
                     <div class="chart-container">
                         <canvas id="favoritesChart"></canvas>
@@ -153,7 +154,7 @@
                 <div class="report-section">
                     <h5 class="mb-3">
                         <i class="bi bi-graph-up text-success me-2"></i>
-                        Shares theo tháng (2024)
+                        Shares theo tháng (2025)
                     </h5>
                     <div class="chart-container">
                         <canvas id="sharesChart"></canvas>
