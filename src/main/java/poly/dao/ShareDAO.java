@@ -11,6 +11,6 @@ public interface ShareDAO {
     void update(Share share);
     void deleteById(Long id);
     
-    // ✅ THÊM MỚI: Đếm số lượng share của video
+    // ✅ THÊM METHOD ĐẾM
     int countByVideoId(String videoId);
 }

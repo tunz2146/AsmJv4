@@ -162,7 +162,7 @@ public class FavoriteDAOImpl implements FavoriteDAO {
         }
     }
     
-    // ✅ METHOD MỚI: Đếm số lượng like theo videoId
+    // ✅ THÊM METHOD ĐẾM
     @Override
     public int countByVideoId(String videoId) {
         EntityManager em = JPAUtils.getEntityManager();

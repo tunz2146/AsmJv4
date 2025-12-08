@@ -45,6 +45,8 @@ public class VideoDetailServlet extends HttpServlet {
             // Tăng lượt xem (increment views)
             videoDAO.incrementViews(videoId);
             
+            
+            
             // Reload lại video để lấy số views mới
             video = videoDAO.findById(videoId);
             

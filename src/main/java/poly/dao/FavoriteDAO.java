@@ -17,6 +17,6 @@ public interface FavoriteDAO {
     Favorite findByUserAndVideo(String userId, String videoId);
     void deleteByUserAndVideo(String userId, String videoId);
     
-    // ✅ THÊM MỚI: Đếm số lượng like của video
+    // ✅ THÊM METHOD ĐẾM
     int countByVideoId(String videoId);
 }

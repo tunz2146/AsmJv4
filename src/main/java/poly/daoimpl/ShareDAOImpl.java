@@ -101,7 +101,7 @@ public class ShareDAOImpl implements ShareDAO {
         }
     }
     
-    // ✅ METHOD MỚI: Đếm số lượng share theo videoId
+    // ✅ THÊM METHOD ĐẾM
     @Override
     public int countByVideoId(String videoId) {
         EntityManager em = JPAUtils.getEntityManager();
