@@ -10,6 +10,8 @@ import poly.daoimpl.VideoDAOImpl;
 import poly.entity.Video;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @WebServlet("/video-detail")
@@ -46,14 +48,30 @@ public class VideoDetailServlet extends HttpServlet {
             // Reload lại video để lấy số views mới
             video = videoDAO.findById(videoId);
             
-            // ✅✅✅ QUAN TRỌNG: DÙNG METHOD MỚI - LẤY VIDEO ĐỀ XUẤT
+            // ✅✅✅ LẤY VIDEO ĐỀ XUẤT NGẪU NHIÊN
             System.out.println("=== VIDEO DETAIL SERVLET ===");
             System.out.println("Current Video: " + videoId);
-            System.out.println("Calling findSuggestedVideos()...");
             
-            List<Video> suggestedVideos = videoDAO.findSuggestedVideos(videoId, 5);
+            // Bước 1: Lấy TẤT CẢ video IDs (trừ video hiện tại)
+            List<String> allIds = videoDAO.findAllActiveVideoIds();
+            allIds.remove(videoId); // Loại bỏ video hiện tại
             
-            System.out.println("Suggested videos received: " + (suggestedVideos != null ? suggestedVideos.size() : 0));
+            System.out.println("Available videos: " + allIds.size());
+            
+            // Bước 2: Shuffle ngẫu nhiên
+            List<String> shuffledIds = new ArrayList<>(allIds);
+            Collections.shuffle(shuffledIds);
+            
+            // Bước 3: Lấy 5 video đầu tiên
+            int limit = Math.min(5, shuffledIds.size());
+            List<String> suggestedIds = shuffledIds.subList(0, limit);
+            
+            System.out.println("Suggested IDs: " + suggestedIds);
+            
+            // Bước 4: Load videos theo IDs
+            List<Video> suggestedVideos = videoDAO.findByIds(suggestedIds);
+            
+            System.out.println("Loaded " + suggestedVideos.size() + " suggested videos");
             System.out.println("===========================");
             
             // Gửi dữ liệu sang JSP

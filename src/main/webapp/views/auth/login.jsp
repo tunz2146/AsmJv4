@@ -149,8 +149,10 @@
                         </div>
                     </div>
                     
+                    <!-- ✅ Remember Me Checkbox with Auto-check -->
                     <div class="mb-3 form-check">
-                        <input type="checkbox" class="form-check-input" id="remember" name="remember">
+                        <input type="checkbox" class="form-check-input" id="remember" name="remember"
+                               ${rememberChecked ? 'checked' : ''}>
                         <label class="form-check-label" for="remember">
                             Ghi nhớ đăng nhập
                         </label>
@@ -168,7 +170,7 @@
                     <p class="mb-2 text-muted">
                         <i class="bi bi-info-circle me-1"></i>
                         Nếu bạn chưa có tài khoản:
-                        <a href="<%=request.getContextPath()%>/views/auth/registration.jsp" class="text-decoration-none fw-bold">
+                        <a href="<%=request.getContextPath()%>/register" class="text-decoration-none fw-bold">
                             Đăng Ký ngay
                         </a>
                     </p>

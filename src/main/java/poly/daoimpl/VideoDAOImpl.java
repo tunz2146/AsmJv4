@@ -7,18 +7,16 @@ import poly.util.JPAUtils;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.TypedQuery;
 import java.util.List;
+import java.util.ArrayList;
 
 public class VideoDAOImpl implements VideoDAO {
-    
-    // ==================== CRUD CƠ BẢN ====================
     
     @Override
     public List<Video> findAll() {
         EntityManager em = JPAUtils.getEntityManager();
         try {
-            // Sắp xếp CỐ ĐỊNH theo ID giảm dần (video mới nhất trước)
             TypedQuery<Video> query = em.createQuery(
-                "SELECT v FROM Video v WHERE v.active = true ORDER BY v.id DESC", 
+                "SELECT v FROM Video v WHERE v.active = true ORDER BY v.id", 
                 Video.class
             );
             return query.getResultList();
@@ -42,15 +40,6 @@ public class VideoDAOImpl implements VideoDAO {
         EntityManager em = JPAUtils.getEntityManager();
         try {
             em.getTransaction().begin();
-            
-            // Set default values nếu null
-            if (video.getViews() == null) {
-                video.setViews(0);
-            }
-            if (video.getActive() == null) {
-                video.setActive(true);
-            }
-            
             em.persist(video);
             em.getTransaction().commit();
         } catch (Exception e) {
@@ -100,26 +89,6 @@ public class VideoDAOImpl implements VideoDAO {
         }
     }
     
-    // ==================== PHÂN TRANG ====================
-    
-    @Override
-    public List<Video> findWithPagination(int page, int size) {
-        EntityManager em = JPAUtils.getEntityManager();
-        try {
-            // ✅ SẮP XẾP CỐ ĐỊNH: ID giảm dần (video mới nhất trước)
-            // Điều này đảm bảo thứ tự KHÔNG BAO GIỜ thay đổi khi reload
-            TypedQuery<Video> query = em.createQuery(
-                "SELECT v FROM Video v WHERE v.active = true ORDER BY v.id DESC", 
-                Video.class
-            );
-            query.setFirstResult((page - 1) * size);
-            query.setMaxResults(size);
-            return query.getResultList();
-        } finally {
-            JPAUtils.closeEntityManager(em);
-        }
-    }
-    
     @Override
     public int countAll() {
         EntityManager em = JPAUtils.getEntityManager();
@@ -133,8 +102,6 @@ public class VideoDAOImpl implements VideoDAO {
             JPAUtils.closeEntityManager(em);
         }
     }
-    
-    // ==================== VIDEO VIEWS ====================
     
     @Override
     public void incrementViews(String videoId) {
@@ -161,10 +128,8 @@ public class VideoDAOImpl implements VideoDAO {
     public List<Video> findTop6ByViews() {
         EntityManager em = JPAUtils.getEntityManager();
         try {
-            // Sắp xếp theo views giảm dần, nếu bằng nhau thì ID giảm dần
             TypedQuery<Video> query = em.createQuery(
-                "SELECT v FROM Video v WHERE v.active = true " +
-                "ORDER BY v.views DESC, v.id DESC", 
+                "SELECT v FROM Video v WHERE v.active = true ORDER BY v.views DESC", 
                 Video.class
             );
             query.setMaxResults(6);
@@ -174,22 +139,116 @@ public class VideoDAOImpl implements VideoDAO {
         }
     }
     
-    // ==================== VIDEO ĐỀ CỬ ====================
-    
     @Override
-    public List<Video> findSuggestedVideos(String currentVideoId, int limit) {
+    public List<Video> findWithPagination(int page, int size) {
         EntityManager em = JPAUtils.getEntityManager();
         try {
-            // Lấy video đề cử: loại trừ video hiện tại, sắp xếp theo ID giảm dần
             TypedQuery<Video> query = em.createQuery(
-                "SELECT v FROM Video v " +
-                "WHERE v.active = true AND v.id != :currentId " +
-                "ORDER BY v.id DESC", 
+                "SELECT v FROM Video v WHERE v.active = true ORDER BY v.views DESC", 
                 Video.class
             );
-            query.setParameter("currentId", currentVideoId);
+            query.setFirstResult((page - 1) * size);
+            query.setMaxResults(size);
+            return query.getResultList();
+        } finally {
+            JPAUtils.closeEntityManager(em);
+        }
+    }
+    
+    @Override
+    public List<Video> findWithPaginationNoSort(int page, int size) {
+        EntityManager em = JPAUtils.getEntityManager();
+        try {
+            TypedQuery<Video> query = em.createQuery(
+                "SELECT v FROM Video v WHERE v.active = true ORDER BY v.id", 
+                Video.class
+            );
+            query.setFirstResult((page - 1) * size);
+            query.setMaxResults(size);
+            return query.getResultList();
+        } finally {
+            JPAUtils.closeEntityManager(em);
+        }
+    }
+    
+    @Override
+    public List<Video> findSuggestedVideos(String excludeVideoId, int limit) {
+        EntityManager em = JPAUtils.getEntityManager();
+        try {
+            TypedQuery<Video> query = em.createQuery(
+                "SELECT v FROM Video v WHERE v.active = true AND v.id != :excludeId ORDER BY v.id", 
+                Video.class
+            );
+            query.setParameter("excludeId", excludeVideoId);
             query.setMaxResults(limit);
             return query.getResultList();
+        } finally {
+            JPAUtils.closeEntityManager(em);
+        }
+    }
+    
+    // ===== METHODS TỐI ƯU - CHỈ LẤY IDs =====
+    
+    /**
+     * ✅ Lấy TẤT CẢ video IDs (CHỈ ID, KHÔNG load video)
+     * Query này SIÊU NHANH vì chỉ lấy 1 cột
+     */
+    @Override
+    public List<String> findAllActiveVideoIds() {
+        EntityManager em = JPAUtils.getEntityManager();
+        try {
+            TypedQuery<String> query = em.createQuery(
+                "SELECT v.id FROM Video v WHERE v.active = true", 
+                String.class
+            );
+            List<String> ids = query.getResultList();
+            
+            System.out.println("=== findAllActiveVideoIds ===");
+            System.out.println("Total IDs: " + ids.size());
+            
+            return ids;
+        } finally {
+            JPAUtils.closeEntityManager(em);
+        }
+    }
+    
+    /**
+     * ✅ Tìm videos theo danh sách IDs
+     * Giữ ĐÚNG THỨ TỰ của danh sách IDs truyền vào
+     */
+    @Override
+    public List<Video> findByIds(List<String> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return new ArrayList<>();
+        }
+        
+        EntityManager em = JPAUtils.getEntityManager();
+        try {
+            // Query videos với IN clause
+            TypedQuery<Video> query = em.createQuery(
+                "SELECT v FROM Video v WHERE v.id IN :ids", 
+                Video.class
+            );
+            query.setParameter("ids", ids);
+            List<Video> videos = query.getResultList();
+            
+            // ⚠️ QUAN TRỌNG: IN clause KHÔNG giữ thứ tự
+            // Phải sắp xếp lại theo thứ tự IDs
+            List<Video> orderedVideos = new ArrayList<>();
+            for (String id : ids) {
+                for (Video video : videos) {
+                    if (video.getId().equals(id)) {
+                        orderedVideos.add(video);
+                        break;
+                    }
+                }
+            }
+            
+            System.out.println("=== findByIds ===");
+            System.out.println("Requested: " + ids.size() + " IDs");
+            System.out.println("Found: " + orderedVideos.size() + " videos");
+            
+            return orderedVideos;
         } finally {
             JPAUtils.closeEntityManager(em);
         }

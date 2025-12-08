@@ -1,8 +1,7 @@
 package poly.servlet.auth;
 
 import poly.entity.User;
-import poly.dao.UserDAO;
-import poly.daoimpl.UserDAOImpl;
+import poly.service.AuthService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.Cookie;
@@ -16,7 +15,7 @@ import java.io.IOException;
 public class LoginServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
     
-    private UserDAO userDAO = new UserDAOImpl();
+    private AuthService authService = new AuthService();
     
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) 
@@ -29,6 +28,21 @@ public class LoginServlet extends HttpServlet {
             return;
         }
         
+        // ✅ Kiểm tra Remember Me Cookie
+        Cookie[] cookies = req.getCookies();
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if ("rememberedUser".equals(cookie.getName())) {
+                    String username = cookie.getValue();
+                    
+                    // Tự động điền username vào form
+                    req.setAttribute("username", username);
+                    req.setAttribute("rememberChecked", true);
+                    break;
+                }
+            }
+        }
+        
         // Hiển thị trang login
         req.getRequestDispatcher("/views/auth/login.jsp").forward(req, resp);
     }
@@ -36,10 +50,6 @@ public class LoginServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) 
             throws ServletException, IOException {
-        
-        // Set encoding
-        req.setCharacterEncoding("UTF-8");
-        resp.setCharacterEncoding("UTF-8");
         
         // Lấy dữ liệu từ form
         String username = req.getParameter("username");
@@ -57,25 +67,34 @@ public class LoginServlet extends HttpServlet {
         }
         
         try {
-            // Tìm user trong database
-            User user = userDAO.findById(username.trim());
+            // ❗ Không hash password
+            User user = authService.authenticate(username.trim(), password.trim());
             
-            // Kiểm tra user tồn tại và password đúng
-            if (user != null && user.getPassword().equals(password.trim())) {
-                
-                // Đăng nhập thành công
+            if (user != null) {
+
+                // Lưu session
                 HttpSession session = req.getSession(true);
                 session.setAttribute("currentUser", user);
                 session.setMaxInactiveInterval(30 * 60); // 30 phút
                 
-                System.out.println("✅ Đăng nhập thành công: " + username);
-                
-                // Remember me
+                // ✅ Xử lý Remember me
                 if ("on".equals(remember)) {
                     Cookie cookie = new Cookie("rememberedUser", username);
                     cookie.setMaxAge(7 * 24 * 60 * 60); // 7 ngày
                     cookie.setPath(req.getContextPath());
                     resp.addCookie(cookie);
+                } else {
+                    // ✅ Nếu không check "Ghi nhớ", xóa cookie cũ
+                    Cookie[] cookies = req.getCookies();
+                    if (cookies != null) {
+                        for (Cookie c : cookies) {
+                            if ("rememberedUser".equals(c.getName())) {
+                                c.setMaxAge(0);
+                                c.setPath(req.getContextPath());
+                                resp.addCookie(c);
+                            }
+                        }
+                    }
                 }
                 
                 // Redirect
@@ -88,7 +107,6 @@ public class LoginServlet extends HttpServlet {
                 
             } else {
                 // Sai username hoặc mật khẩu
-                System.out.println("❌ Đăng nhập thất bại: " + username);
                 req.setAttribute("error", "Tên đăng nhập hoặc mật khẩu không đúng!");
                 req.setAttribute("username", username);
                 req.getRequestDispatcher("/views/auth/login.jsp").forward(req, resp);
