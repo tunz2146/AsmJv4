@@ -45,7 +45,22 @@ public class VideoDetailServlet extends HttpServlet {
             // Tăng lượt xem (increment views)
             videoDAO.incrementViews(videoId);
             
-            
+//         // ============================================
+//            // ✅ ĐẾM LIKE VÀ SHARE
+//            // ============================================
+//            int likeCount = FavoriteDAO.countByVideoId(videoId);
+//            int shareCount = ShareDAO.countByVideoId(videoId);
+//
+//            // ============================================
+//            // ✅ KIỂM TRA USER ĐÃ LIKE CHƯA
+//            // ============================================
+//            boolean isLiked = false;
+//            HttpSession session = req.getSession(false);
+//            if (session != null && session.getAttribute("currentUser") != null) {
+//                User currentUser = (User) session.getAttribute("currentUser");
+//                Favorite favorite = FavoriteDAO.findByUserAndVideo(currentUser.getId(), videoId);
+//                isLiked = (favorite != null);
+//            }
             
             // Reload lại video để lấy số views mới
             video = videoDAO.findById(videoId);
