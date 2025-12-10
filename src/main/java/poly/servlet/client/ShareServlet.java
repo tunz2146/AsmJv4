@@ -22,7 +22,7 @@ import java.util.Date;
 public class ShareServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
     
-    private VideoDAO videoDAO = new VideoDAOImpl();
+    private Video videoDAO = new VideoDAOImpl();
     private ShareDAO shareDAO = new ShareDAOImpl();
     private EmailService emailService = new EmailService();
     
