@@ -54,10 +54,15 @@ public class ShareDAOImpl implements ShareDAO {
             em.getTransaction().begin();
             em.persist(share);
             em.getTransaction().commit();
+            
+            System.out.println("✅ Created share: User=" + share.getUser().getId() + 
+                             ", Video=" + share.getVideo().getId() + 
+                             ", Email=" + share.getEmail());
         } catch (Exception e) {
             if (em.getTransaction().isActive()) {
                 em.getTransaction().rollback();
             }
+            e.printStackTrace();
             throw e;
         } finally {
             JPAUtils.closeEntityManager(em);
@@ -101,7 +106,7 @@ public class ShareDAOImpl implements ShareDAO {
         }
     }
     
-    // ✅ THÊM METHOD ĐẾM
+    // ✅✅✅ METHOD QUAN TRỌNG - ĐẾM SỐ SHARE ✅✅✅
     @Override
     public int countByVideoId(String videoId) {
         EntityManager em = JPAUtils.getEntityManager();
@@ -112,8 +117,13 @@ public class ShareDAOImpl implements ShareDAO {
             )
             .setParameter("videoId", videoId)
             .getSingleResult();
-            return count.intValue();
+            
+            int result = count.intValue();
+            System.out.println("🔢 countByVideoId(" + videoId + ") = " + result);
+            
+            return result;
         } catch (Exception e) {
+            System.err.println("❌ Error counting shares for video " + videoId);
             e.printStackTrace();
             return 0;
         } finally {

@@ -14,9 +14,11 @@ public interface FavoriteDAO {
     
     // Methods hiện có
     List<Favorite> findByUserId(String userId);
+    
+    // Methods mới cho Assignment
     Favorite findByUserAndVideo(String userId, String videoId);
     void deleteByUserAndVideo(String userId, String videoId);
     
-    // ✅ THÊM METHOD ĐẾM
+    // ✅✅✅ QUAN TRỌNG - ĐẾM SỐ LIKE CỦA VIDEO ✅✅✅
     int countByVideoId(String videoId);
 }

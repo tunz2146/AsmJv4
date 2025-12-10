@@ -54,10 +54,14 @@ public class FavoriteDAOImpl implements FavoriteDAO {
             em.getTransaction().begin();
             em.persist(favorite);
             em.getTransaction().commit();
+            
+            System.out.println("✅ Created favorite: User=" + favorite.getUser().getId() + 
+                             ", Video=" + favorite.getVideo().getId());
         } catch (Exception e) {
             if (em.getTransaction().isActive()) {
                 em.getTransaction().rollback();
             }
+            e.printStackTrace();
             throw e;
         } finally {
             JPAUtils.closeEntityManager(em);
@@ -151,18 +155,23 @@ public class FavoriteDAOImpl implements FavoriteDAO {
             .setParameter("userId", userId)
             .setParameter("videoId", videoId)
             .executeUpdate();
+            
             em.getTransaction().commit();
+            
+            System.out.println("✅ Deleted favorite: User=" + userId + 
+                             ", Video=" + videoId + ", Rows=" + deleted);
         } catch (Exception e) {
             if (em.getTransaction().isActive()) {
                 em.getTransaction().rollback();
             }
+            e.printStackTrace();
             throw e;
         } finally {
             JPAUtils.closeEntityManager(em);
         }
     }
     
-    // ✅ THÊM METHOD ĐẾM
+    // ✅✅✅ METHOD QUAN TRỌNG - ĐẾM SỐ LIKE ✅✅✅
     @Override
     public int countByVideoId(String videoId) {
         EntityManager em = JPAUtils.getEntityManager();
@@ -173,8 +182,13 @@ public class FavoriteDAOImpl implements FavoriteDAO {
             )
             .setParameter("videoId", videoId)
             .getSingleResult();
-            return count.intValue();
+            
+            int result = count.intValue();
+            System.out.println("🔢 countByVideoId(" + videoId + ") = " + result);
+            
+            return result;
         } catch (Exception e) {
+            System.err.println("❌ Error counting likes for video " + videoId);
             e.printStackTrace();
             return 0;
         } finally {

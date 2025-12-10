@@ -5,8 +5,15 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+import poly.dao.FavoriteDAO;
+import poly.dao.ShareDAO;
 import poly.dao.VideoDAO;
+import poly.daoimpl.FavoriteDAOImpl;
+import poly.daoimpl.ShareDAOImpl;
 import poly.daoimpl.VideoDAOImpl;
+import poly.entity.Favorite;
+import poly.entity.User;
 import poly.entity.Video;
 
 import java.io.IOException;
@@ -19,6 +26,8 @@ public class VideoDetailServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
     
     private VideoDAO videoDAO = new VideoDAOImpl();
+    private FavoriteDAO favoriteDAO = new FavoriteDAOImpl();
+    private ShareDAO shareDAO = new ShareDAOImpl();
     
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) 
@@ -45,54 +54,73 @@ public class VideoDetailServlet extends HttpServlet {
             // Tăng lượt xem (increment views)
             videoDAO.incrementViews(videoId);
             
-//         // ============================================
-//            // ✅ ĐẾM LIKE VÀ SHARE
-//            // ============================================
-//            int likeCount = FavoriteDAO.countByVideoId(videoId);
-//            int shareCount = ShareDAO.countByVideoId(videoId);
-//
-//            // ============================================
-//            // ✅ KIỂM TRA USER ĐÃ LIKE CHƯA
-//            // ============================================
-//            boolean isLiked = false;
-//            HttpSession session = req.getSession(false);
-//            if (session != null && session.getAttribute("currentUser") != null) {
-//                User currentUser = (User) session.getAttribute("currentUser");
-//                Favorite favorite = FavoriteDAO.findByUserAndVideo(currentUser.getId(), videoId);
-//                isLiked = (favorite != null);
-//            }
-            
             // Reload lại video để lấy số views mới
             video = videoDAO.findById(videoId);
             
-            // ✅✅✅ LẤY VIDEO ĐỀ XUẤT NGẪU NHIÊN
-            System.out.println("=== VIDEO DETAIL SERVLET ===");
-            System.out.println("Current Video: " + videoId);
+            // ============================================
+            // ✅ ĐẾM LIKE VÀ SHARE TỪ DATABASE
+            // ============================================
+            int likeCount = favoriteDAO.countByVideoId(videoId);
+            int shareCount = shareDAO.countByVideoId(videoId);
             
-            // Bước 1: Lấy TẤT CẢ video IDs (trừ video hiện tại)
-            List<String> allIds = videoDAO.findAllActiveVideoIds();
-            allIds.remove(videoId); // Loại bỏ video hiện tại
+            System.out.println("Video: " + videoId);
+            System.out.println("Likes: " + likeCount);
+            System.out.println("Shares: " + shareCount);
             
-            System.out.println("Available videos: " + allIds.size());
+            // ============================================
+            // ✅ KIỂM TRA USER ĐÃ LIKE CHƯA
+            // ============================================
+            boolean isLiked = false;
+            HttpSession session = req.getSession(false);
+            if (session != null && session.getAttribute("currentUser") != null) {
+                User currentUser = (User) session.getAttribute("currentUser");
+                Favorite favorite = favoriteDAO.findByUserAndVideo(currentUser.getId(), videoId);
+                isLiked = (favorite != null);
+                System.out.println("User: " + currentUser.getId() + " - isLiked: " + isLiked);
+            }
             
-            // Bước 2: Shuffle ngẫu nhiên
-            List<String> shuffledIds = new ArrayList<>(allIds);
-            Collections.shuffle(shuffledIds);
+            // ============================================
+            // ✅ LẤY VIDEO ĐỀ XUẤT NGẪU NHIÊN
+            // ============================================
+            System.out.println("=== LOADING SUGGESTED VIDEOS ===");
             
-            // Bước 3: Lấy 5 video đầu tiên
-            int limit = Math.min(5, shuffledIds.size());
-            List<String> suggestedIds = shuffledIds.subList(0, limit);
+            List<Video> suggestedVideos = new ArrayList<>();
             
-            System.out.println("Suggested IDs: " + suggestedIds);
+            try {
+                // Bước 1: Lấy TẤT CẢ video IDs (trừ video hiện tại)
+                List<String> allIds = videoDAO.findAllActiveVideoIds();
+                allIds.remove(videoId); // Loại bỏ video hiện tại
+                
+                System.out.println("Available videos: " + allIds.size());
+                
+                // Bước 2: Shuffle ngẫu nhiên
+                List<String> shuffledIds = new ArrayList<>(allIds);
+                Collections.shuffle(shuffledIds);
+                
+                // Bước 3: Lấy 5 video đầu tiên
+                int limit = Math.min(5, shuffledIds.size());
+                List<String> suggestedIds = shuffledIds.subList(0, limit);
+                
+                System.out.println("Suggested IDs: " + suggestedIds);
+                
+                // Bước 4: Load videos theo IDs
+                suggestedVideos = videoDAO.findByIds(suggestedIds);
+                
+                System.out.println("Loaded " + suggestedVideos.size() + " suggested videos");
+            } catch (Exception e) {
+                System.err.println("Error loading suggested videos: " + e.getMessage());
+                e.printStackTrace();
+            }
             
-            // Bước 4: Load videos theo IDs
-            List<Video> suggestedVideos = videoDAO.findByIds(suggestedIds);
+            System.out.println("================================");
             
-            System.out.println("Loaded " + suggestedVideos.size() + " suggested videos");
-            System.out.println("===========================");
-            
-            // Gửi dữ liệu sang JSP
+            // ============================================
+            // ✅ GỬI DỮ LIỆU SANG JSP
+            // ============================================
             req.setAttribute("video", video);
+            req.setAttribute("likeCount", likeCount);
+            req.setAttribute("shareCount", shareCount);
+            req.setAttribute("isLiked", isLiked);
             req.setAttribute("suggestedVideos", suggestedVideos);
             
             // Forward sang trang chi tiết

@@ -87,8 +87,12 @@ public class LikeServlet extends HttpServlet {
             
             favoriteDAO.create(favorite);
             
+            // ✅ Đếm lại số lượng like
+            int newLikeCount = favoriteDAO.countByVideoId(videoId);
+            
             json.addProperty("success", true);
             json.addProperty("message", "Đã thêm vào danh sách yêu thích!");
+            json.addProperty("likeCount", newLikeCount); // ✅ Trả về số mới
             out.print(json.toString());
             
         } catch (Exception e) {

@@ -33,6 +33,9 @@ public class Video implements Serializable {
     @Column(name = "Description", length = 500)
     private String description;
     
+    @Column(name = "Likes", nullable = false)
+    private int likes = 0;
+   
     @Column(name = "Active", nullable = false)
     private Boolean active = true;
     
@@ -49,19 +52,19 @@ public class Video implements Serializable {
     
     @OneToMany(mappedBy = "video", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Share> shares;
-    
     // Constructors
     public Video() {
     }
     
     public Video(String id, String title, String poster, String videoId, String videoUrl, 
-                 Integer views, String description, Boolean active, User createdBy, Date createdDate) {
+                 Integer views,int likes, String description, Boolean active, User createdBy, Date createdDate) {
         this.id = id;
         this.title = title;
         this.poster = poster;
         this.videoId = videoId;
         this.videoUrl = videoUrl;
         this.views = views;
+        this.likes = likes;
         this.description = description;
         this.active = active;
         this.createdBy = createdBy;
@@ -133,10 +136,17 @@ public class Video implements Serializable {
         this.active = active;
     }
     
-    public User getCreatedBy() {
+    public User getLikes() {
         return createdBy;
     }
     
+    public void seLikes(int likes) {
+        this.likes = likes;
+    }
+    
+    public User getCreatedBy() {
+        return createdBy;
+    }
     public void setCreatedBy(User createdBy) {
         this.createdBy = createdBy;
     }
